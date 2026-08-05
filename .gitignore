@@ -1,0 +1,53 @@
+# ====================
+# 1. CMake 构建目录
+# ====================
+build/
+cmake-build-*/
+out/
+_skbuild/
+
+# ====================
+# 2. IDE / 编辑器配置文件（不要把这些配置提交到仓库）
+# ====================
+# VS Code
+.vscode/
+.idea/
+
+# CLion / JetBrains
+.idea/
+*.iml
+
+# Visual Studio (如果跨平台)
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+# ====================
+# 3. CMake 生成的各种中间文件和缓存
+# ====================
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
+CTestTestfile.cmake
+*-prefix/
+*-build/
+*-install/
+Makefile
+*.o
+*.so
+*.dylib
+*.dll
+*.lib
+*.a
+*.exe
+*.out
+
+# ====================
+# 4. 编译产生的测试/示例可执行文件
+# ====================
+# 如果你在 tests/ 或 examples/ 目录下生成了可执行文件，可以加上这几行
+# (注意：如果你的二进制文件刚好和文件夹同名，这里可能需要更精准的写法)
+/bin/
