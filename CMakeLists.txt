@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.25)
 
-set(CMAKE_C_COMPILER "/usr/bin/gcc" CACHE FILEPATH "C compuler" FORCE)
-set(CMAKE_CXX_COMPILER "/usr/bin/g++" CACHE FILEPATH "C++ compuler" FORCE)
+set(CMAKE_C_COMPILER "/usr/bin/gcc" CACHE FILEPATH "C compiler" FORCE)
+set(CMAKE_CXX_COMPILER "/usr/bin/g++" CACHE FILEPATH "C++ compiler" FORCE)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
