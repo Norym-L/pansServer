@@ -1,5 +1,4 @@
 ﻿#include <atomic>
-#include <charconv>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -7,9 +6,7 @@
 #include <iostream>
 #include <latch>
 #include <mutex>
-#include <numeric>
 #include <shared_mutex>
-#include <stdexcept>
 #include <string_view>
 #include <thread>
 #include <vector>
@@ -137,7 +134,7 @@ double Run(Benchmark&& benchmark)
 void PrintResult(std::string_view name, double total_nanoseconds)
 {
 	const double nanoseconds_per_operation = total_nanoseconds / static_cast<double>(g_target);
-	std::cout << std::left << std::setw(14) << name << std::right
+	std::cout << std::left << std::setw(30) << name << std::right
 		<< total_nanoseconds << " ns \ttotal, "
 		<< nanoseconds_per_operation << " ns/op\n";
 }

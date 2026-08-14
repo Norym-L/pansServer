@@ -11,7 +11,7 @@ project(pans VERSION 0.1.0 LANGUAGES CXX C)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-option(PANS_BUILD_EXAMLPES  "Build examples" ON)
+option(PANS_BUILD_EXAMPLES  "Build examples" ON)
 option(PANS_BUILD_TESTS     "Build tests"    ON)
 option(PANS_BUILD_TOOLS     "Build tools"    ON)
 
