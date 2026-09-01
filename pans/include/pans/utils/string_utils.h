@@ -1,10 +1,3 @@
-/**
- * @file string_utils.h
- * @brief string_utils 字符串工具，款字符 utf-8 字符转换
- *
- * @author norym
- * @date 2026/8/30
- */
 #ifndef PANS_INCLUDE_PANS_UTILS_STRING_UTILS_H
 #define PANS_INCLUDE_PANS_UTILS_STRING_UTILS_H
 

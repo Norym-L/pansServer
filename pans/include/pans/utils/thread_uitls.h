@@ -1,10 +1,3 @@
-/**
- * @file thread_uitls.h
- * @brief thread_uitls 设置线程名称 获取线程名称、id
- *
- * @author norym
- * @date 2026/8/30
- */
 #ifndef PANS_INCLUDE_PANS_UTILS_THREAD_UITLS_H
 #define PANS_INCLUDE_PANS_UTILS_THREAD_UITLS_H
 
