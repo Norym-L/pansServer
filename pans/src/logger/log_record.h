@@ -20,7 +20,6 @@ struct LogRecordView
     u64 m_threadId = 0;                                      // 线程ID
     u64 m_fiberId = 0;                                       // 协程ID
     std::string_view m_threadName = "";                      // 线程名
-    std::string_view m_fiberName = "";                       // 协程名
     std::string_view m_fileName = "";                        // 文件名
     u32 m_line = 0;                                          // 行号
 };

@@ -122,7 +122,7 @@ public:
             const error_t result = localtime_s(&buffer, &current_second);
             ASSERT_RETNONE2(result == 0, "failed to convert log time to local time.");
 #else
-            const std::tm* result = localtime_r(&current_second, &buffer);
+            const std::tm *result = localtime_r(&current_second, &buffer);
             ASSERT_RETNONE2(result != nullptr, "failed to convert log time to local time.");
 #endif
             const std::size_t size = std::strftime(cached_date_time, sizeof(cached_date_time), m_format.c_str(),
@@ -233,24 +233,25 @@ template<typename Item>
         {'t', &CreateSimpleFormatItem<ThreadIdFormatItem>},     // 线程id
         {'n', &CreateSimpleFormatItem<NewLineFormatItem>},      // 换行
         {'d', &CreateConfiguredFormatItem<DateTimeFormatItem>}, // 当前时间
-        {'u', &CreateSimpleFormatItem<FileNameFormatItem>},     // 文件名
+        {'u', &CreateSimpleFormatItem<MicrosecondsFormatItem>}, // 毫秒数
+        {'f', &CreateSimpleFormatItem<FileNameFormatItem>},     // 文件名
         {'l', &CreateSimpleFormatItem<LineFormatItem>},         // 行号
         {'T', &CreateSimpleFormatItem<TabFormatItem>},          // 制表符
         {'F', &CreateSimpleFormatItem<FiberIdFormatItem>},      // 协程id
         {'N', &CreateSimpleFormatItem<ThreadNameFormatItem>},   // 线程名称
-        };
+    };
     return FORMAT_ITEM_FACTORIES;
 }
 
 [[nodiscard]] std::unique_ptr<Formatter::FormatItem> CreateFormatItem(char directive, std::string_view format)
 {
-    const auto& factories = GetFormatItemFactories();
+    const auto &factories = GetFormatItemFactories();
     const auto it = factories.find(directive);
     ASSERT_RETVAL2(it != factories.end(), nullptr, "unknow logger format directive: " << directive << ".");
     return it->second(format);
 }
 
-void Formatter::addLiteral(std::string& literal)
+void Formatter::addLiteral(std::string &literal)
 {
     if (literal.empty())
     {
@@ -289,7 +290,7 @@ int Formatter::parse()
         m_items.push_back(CreateFormatItem(directive, item_format));
     }
     addLiteral(literal);
-    for (const auto& item:m_items)
+    for (const auto &item: m_items)
     {
         ASSERT_RETVAL2(item != nullptr, -3, "logger formatter contains a null format item.");
     }

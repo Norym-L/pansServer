@@ -13,7 +13,7 @@
 
 namespace pans
 {
-constexpr std::string_view DEFAULT_LOG_PATTERN = "%d{%Y-%m-%d %H:%M:%S}.%u%Tthread-%t%Tfiber=%F%T[%p]%T%f:%l%T%m%n";
+constexpr std::string_view DEFAULT_LOG_PATTERN = "%d{%Y-%m-%d %H:%M:%S}.%u%Tthread=%t%Tfiber=%F%T[%p]%T%f:%l%T%m%n";
 
 Logger::Logger(std::string name)
     : m_impl(std::make_unique<Impl>(std::move(name)))
