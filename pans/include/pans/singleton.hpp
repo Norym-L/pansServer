@@ -1,0 +1,28 @@
+#ifndef PANS_LINCLUDE_PANS_SINGLETON_H
+#define PANS_LINCLUDE_PANS_SINGLETON_H
+
+namespace pans
+{
+template<typename T>
+class Singleton
+{
+public:
+    static T& Instance()
+    {
+        static T instance;
+        return instance;
+    }
+
+    Singleton(const Singleton&) = delete;
+    Singleton(Singleton&&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+    Singleton& operator=(Singleton&&) = delete;
+
+protected:
+    Singleton() = default;
+    ~Singleton() = default;
+};
+
+}
+
+#endif //PANS_LINCLUDE_PANS_SINGLETON_H
