@@ -68,17 +68,17 @@ inline LogLine::LogLine(Logger &logger, LogLevel::Level level, u32 line, std::st
 {
     static_assert(sizeof(Impl) <= LOG_LINE_IMPL_SIZE, "LogLine inline implementation storage is to small");
     static_assert(alignof(Impl) <= alignof(std::max_align_t), "Never");
-    std::construct_at(reinterpret_cast<Impl*>(m_implStorage), logger, level, line, file_name); // 在m_implStorage上构造Impl对象
+    std::construct_at(reinterpret_cast<Impl *>(m_implStorage), logger, level, line, file_name); // 在m_implStorage上构造Impl对象
 }
 
 LogLine::Impl &LogLine::getImpl() noexcept
 {
-    return *std::launder(reinterpret_cast<Impl*>(m_implStorage));
+    return *std::launder(reinterpret_cast<Impl *>(m_implStorage));
 }
 
 LogLine::~LogLine() noexcept
 {
-    Impl& impl = getImpl();
+    Impl &impl = getImpl();
     LoggerAccess::Submit(impl.m_logger, impl.getRecord());
     std::destroy_at(&impl);
 }
@@ -88,7 +88,7 @@ std::ostream &LogLine::stream() noexcept
     return getImpl().m_stream;
 }
 
-void LogPrintf(Logger& logger, LogLevel::Level level, u32 line, std::string_view file_name, const char* format, ...)
+void LogPrintf(Logger &logger, LogLevel::Level level, u32 line, std::string_view file_name, const char *format, ...)
 {
     LogLine log_line(logger, level, line, file_name); // 临时构建LogLine，随后析构submit
     if (format == nullptr)

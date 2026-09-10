@@ -1,11 +1,11 @@
 #include <array>
 #include <atomic>
 #include <chrono>
-#include <cstddef>  // std::size_t
+#include <cstddef> // std::size_t
 #include <cstdint>
-#include <iomanip>  // setw
+#include <iomanip> // setw
 #include <iostream>
-#include <sstream>  // std::stringstream
+#include <sstream> // std::stringstream
 #include <string>
 #include <string_view>
 
@@ -16,13 +16,7 @@ constexpr int RUNS = 7;
 std::uint64_t g_target = 0;
 std::atomic<std::uint64_t> BENCHMARK_SINK{0};
 
-std::uint64_t Observe(std::string_view value) noexcept
-{
-    return static_cast<std::uint64_t>(value.size()) +
-           static_cast<unsigned char>(value.front()) +
-           static_cast<unsigned char>(value[value.size() / 2]) +
-           static_cast<unsigned char>(value.back());
-}
+std::uint64_t Observe(std::string_view value) noexcept { return static_cast<std::uint64_t>(value.size()) + static_cast<unsigned char>(value.front()) + static_cast<unsigned char>(value[value.size() / 2]) + static_cast<unsigned char>(value.back()); }
 
 std::uint64_t WriteWithSmallStreamBuffer(std::string_view message)
 {
@@ -65,14 +59,9 @@ double Run(Benchmark &&benchmark)
     return static_cast<double>(total_nanoseconds / RUNS);
 }
 
-void PrintResult(std::string_view name, double total_nanoseconds)
-{
-    std::cout << std::left << std::setw(30) << name << std::right
-        << total_nanoseconds << " ns \ttotal, "
-        << total_nanoseconds / static_cast<double>(g_target) << " ns/op\n";
-}
+void PrintResult(std::string_view name, double total_nanoseconds) { std::cout << std::left << std::setw(30) << name << std::right << total_nanoseconds << " ns \ttotal, " << total_nanoseconds / static_cast<double>(g_target) << " ns/op\n"; }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     if (argc != 2)
     {
@@ -87,14 +76,12 @@ int main(int argc, char* argv[])
     for (const auto message_size: MESSAGE_SIZES)
     {
         const std::string message(message_size, 'x');
-        const double small_stream_buffer_nanoseconds = Run([&]()
-            {
-            return BenchmarkWrites([&]() { return WriteWithSmallStreamBuffer(message); });
+        const double small_stream_buffer_nanoseconds = Run([&]() {
+            return BenchmarkWrites([&]() {
+                return WriteWithSmallStreamBuffer(message);
             });
-        const double stringstream_nanoseconds = Run([&]()
-            {
-            return BenchmarkWrites([&]() { return WriteWithStringStream(message); });
-            });
+        });
+        const double stringstream_nanoseconds = Run([&]() { return BenchmarkWrites([&]() { return WriteWithStringStream(message); }); });
         std::cout << "message: " << message_size << " characters" << std::endl;
         PrintResult("SmallStreamBuffer", small_stream_buffer_nanoseconds);
         PrintResult("Stringstream", stringstream_nanoseconds);

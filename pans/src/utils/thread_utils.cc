@@ -49,7 +49,7 @@ struct LocalFreeDeleter
     try
     {
 #if defined(__linux__)
-        std::array<char, 16> native_name{};
+        std::array < char, 16 > native_name{};
         if (pthread_getname_np(pthread_self(), native_name.data(), native_name.size()) != 0)
         {
             return {};
@@ -80,7 +80,7 @@ struct LocalFreeDeleter
 void SetNativeThreadName(std::string_view name) noexcept
 {
 #if defined(__linux__)
-    std::array<char, 16> native_name{};
+    std::array < char, 16 > native_name{};
     const std::size_t name_size = std::min(name.size(), native_name.size() - 1);
     std::memcpy(native_name.data(), name.data(), name_size);
     (void) pthread_setname_np(pthread_self(), native_name.data());

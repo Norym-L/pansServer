@@ -239,7 +239,7 @@ class LoggerManager final
 {
 public:
     LoggerManager()
-        : m_root(std::make_shared<Logger>("root"))
+        : m_root(std::make_shared < Logger > ("root"))
     {
         m_root->addAppender(MakeStdoutAppender());
         m_loggers.emplace("root", m_root);
@@ -259,7 +259,7 @@ public:
         {
             return it->second;
         }
-        auto logger = std::make_shared<Logger>(std::string(name));
+        auto logger = std::make_shared < Logger > (std::string(name));
         detail::LoggerAccess::SetRoot(*logger, m_root);
         m_loggers.emplace(logger->getName(), logger);
         return logger;
@@ -271,7 +271,7 @@ private:
     LoggerPtr m_root;
 };
 
-LoggerManager& GetLoggerManager()
+LoggerManager &GetLoggerManager()
 {
     static LoggerManager instance;
     return instance;
@@ -286,5 +286,4 @@ LoggerPtr GetLogger(std::string_view name)
 {
     return GetLoggerManager().getLogger(name);
 }
-
 }

@@ -49,12 +49,10 @@ namespace detail
 class LoggerAccess final
 {
 public:
-    static void Submit(Logger& logger, const LogRecordView& record) noexcept;
-    static void SetRoot(Logger& logger, LoggerPtr root) noexcept;
+    static void Submit(Logger &logger, const LogRecordView &record) noexcept;
+    static void SetRoot(Logger &logger, LoggerPtr root) noexcept;
 };
-
 }
-
 }
 
 

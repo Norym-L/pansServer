@@ -6,10 +6,10 @@ target_link_libraries("${INNER_TEST_NAME}" PRIVATE pans Threads::Threads)
 target_include_directories("${INNER_TEST_NAME}" PRIVATE "${PROJECT_SOURCE_DIR}/pans/src")
 set_target_properties("${INNER_TEST_NAME}" PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PANS_TEST_OUTPUT_DIRECTORY}")
 
-foreach(CONFIG IN LISTS CMAKE_CONFIGURATION_TYPES)
+foreach (CONFIG IN LISTS CMAKE_CONFIGURATION_TYPES)
     string(TOUPPER "${CONFIG}" CONFIG_UPPER)
     set_target_properties("${TEST_NAME}" PROPERTIES
             "RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UPPER}" "${PANS_TEST_OUTPUT_DIRECTORY}"
     )
-endforeach()
+endforeach ()
 add_test(NAME "${INNER_TEST_NAME}" COMMAND "{INNER_TEST_NAME}")

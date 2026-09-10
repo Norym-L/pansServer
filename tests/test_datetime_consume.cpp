@@ -49,7 +49,7 @@ void test_time(int times)
     std::cout << "优化倍率：" << static_cast<double>(diff1_ns) / diff2_ns << " ns\n";
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     if (argc < 2)
     {

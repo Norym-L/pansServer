@@ -7,11 +7,13 @@
 class A : public pans::Singleton<A>
 {
     friend class pans::Singleton<A>;
+
 public:
     void log(const std::string &msg)
     {
         std::cout << "[LOG]: " << msg << " m_data=" << m_data << std::endl;
     }
+
 private:
     // A() = default;
     // ~A() = default; 使用默认构造、析构函数，编译器不会对这个类加锁
@@ -21,10 +23,12 @@ private:
         std::puts("A:A() -- only once");
         m_data++;
     }
+
     ~A()
     {
         std::puts("A:~A() -- only once");
     }
+
 private:
     int m_data{0};
 };
@@ -40,7 +44,7 @@ int main()
             A::Instance().log("Hello, Meyers Singlton");
         });
     }
-    for (auto& thread : threads)
+    for (auto &thread: threads)
     {
         thread.join();
     }

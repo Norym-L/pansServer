@@ -15,7 +15,7 @@ template<std::size_t INLINE_CAPACITY>
 class InlineBuffer
 {
 public:
-    void append(const char* data, std::size_t size)
+    void append(const char *data, std::size_t size)
     {
         if (size == 0)
         {
@@ -48,7 +48,7 @@ public:
         append(&value, 1);
     }
 
-    [[nodiscard]] const char* data() const noexcept
+    [[nodiscard]] const char *data() const noexcept
     {
         return m_overflow.empty() ? m_inline.data() : m_overflow.data();
     }
@@ -73,12 +73,12 @@ template<std::size_t INLINE_CAPACITY>
 class SmallStreamBuffer final : public std::streambuf
 {
 public:
-    explicit SmallStreamBuffer(InlineBuffer<INLINE_CAPACITY>& buffer) noexcept
+    explicit SmallStreamBuffer(InlineBuffer<INLINE_CAPACITY> &buffer) noexcept
         : m_buffer(buffer)
     {}
 
 protected:
-    std::streamsize xsputn(const char* data, std::streamsize size) override
+    std::streamsize xsputn(const char *data, std::streamsize size) override
     {
         if (size <= 0)
         {
@@ -99,9 +99,8 @@ protected:
     }
 
 private:
-    InlineBuffer<INLINE_CAPACITY>& m_buffer;
+    InlineBuffer<INLINE_CAPACITY> &m_buffer;
 };
-
 }
 
 #endif //PANS_SRC_LOGGER_BUFFER_H

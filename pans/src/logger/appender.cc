@@ -148,7 +148,7 @@ protected:
     }
 
 private:
-    std::FILE* m_file = nullptr;
+    std::FILE *m_file = nullptr;
 };
 
 AppenderPtr detail::AppenderAccess::MakeStdoutAppender()
