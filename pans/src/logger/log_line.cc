@@ -64,7 +64,7 @@ struct LogLine::Impl final
     std::ostream m_stream;
 };
 
-inline LogLine::LogLine(Logger &logger, LogLevel::Level level, u32 line, std::string_view file_name)
+LogLine::LogLine(Logger &logger, LogLevel::Level level, u32 line, std::string_view file_name)
 {
     static_assert(sizeof(Impl) <= LOG_LINE_IMPL_SIZE, "LogLine inline implementation storage is to small");
     static_assert(alignof(Impl) <= alignof(std::max_align_t), "Never");
