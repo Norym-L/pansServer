@@ -5,6 +5,7 @@
 )
 
 list(SORT PANS_TEST_SOURCE)
+redefine_file_macro("${PANS_TEST_SOURCE}")
 
 find_package(Threads REQUIRED)
 

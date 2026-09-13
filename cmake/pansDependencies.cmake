@@ -1,32 +1,31 @@
-set(PANS_THIRD_PARTY_DIR "${CMAKE_CURRENT_LIST_DIR}/third_party" CACHE PATH "third-party source")
-set(PANS_THIRD_PARTY_OUTPUT_DIR "${CMAKE_CURRENT_LIST_DIR}/output" CACHE PATH "compiled third-party output")
+set(PANS_THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/third_party" CACHE PATH "third-party source")
+set(PANS_THIRD_PARTY_OUTPUT_DIR "${PANS_THIRD_PARTY_DIR}/output" CACHE PATH "compiled third-party output")
 set(PANS_THIRD_PARTY_BUILD_TYPE Release CACHE STRING "third-party build-type")
 set_property(CACHE PANS_THIRD_PARTY_BUILD_TYPE PROPERTY STRINGS Debug Release RelWithDebInfo MinSizeRel)
 
-option(PANS_UPDATE_SUBMODULES "Initialize missing third-party submodules" ON)
-option(PANS_REUSE_INSTALLED_DEPENDENCIES "Reuse compatible dependencies from third-party/output" ON)
+option(PANS_UPDATE_SUBMODULES "Initialize missing third-party git submodules" ON)
+option(PANS_REUSE_INSTALLED_DEPENDENCIES "Reuse compatible dependencies from third_party/output" ON)
 
-# 哨兵文件
+# 子模块哨兵文件
 set(_pans_required_submodules
         "third_party/yaml-cpp|CMakeLists.txt"
         "third_party/abseil-cpp|CMakeLists.txt"
         "third_party/protobuf|CMakeLists.txt"
-        "third_party/rapidjson|CMakeLists.txt"
+        "third_party/rapidjson|include/rapidjson/document.h"
         "third_party/tinyxml2|CMakeLists.txt"
-        "third_party/kcp|CMakeLists.txt"
+        "third_party/kcp|ikcp.c"
         "third_party/zlib|CMakeLists.txt"
 )
 
 find_package(Git QUIET)
 
-# 初始化：检查缺失的子模块，并自动下载
 function(pans_init_third_party_submodules)
     set(missing_submodules)
     foreach (entry IN LISTS _pans_required_submodules)
         string(REPLACE "|" ";" parts "${entry}")
         list(GET parts 0 submodule_path)
         list(GET parts 1 sentinel)
-        if (NOT EXISTS "${PROJECT_SOURCE_DIR}${submodule_path}/${sentinel}")
+        if (NOT EXISTS "${PROJECT_SOURCE_DIR}/${submodule_path}/${sentinel}")
             list(APPEND missing_submodules "${submodule_path}")
         endif ()
     endforeach ()
@@ -37,23 +36,19 @@ function(pans_init_third_party_submodules)
 
     if (NOT PANS_UPDATE_SUBMODULES)
         message(FATAL_ERROR
-                "Missing submodules: ${missing_submodules}\n"
-                "Enable PANS_UPDATE_SUBMODULES to initialize them. or run\n"
-                "git submodule update --init --recursive\n"
-        )
+                "Missing third-party source trees: ${missing_submodules}\n"
+                "Enable PANS_UPDATE_SUBMODULES or run:\n"
+                "  git submodule update --init --recursive")
     endif ()
 
     if (NOT EXISTS "${PROJECT_SOURCE_DIR}/.git")
         message(FATAL_ERROR
-                "Missing third-party submodules: ${missing_submodules}\n"
-                "The source tree is not a git checkout, so CMake cannot initialize them.\n"
-        )
+                "Missing third-party source trees: ${missing_submodules}\n"
+                "The source tree is not a git checkout, so CMake cannot initialize them.")
     endif ()
 
     if (NOT Git_FOUND)
-        message(FATAL_ERROR
-                "Git not found.\n"
-        )
+        message(FATAL_ERROR "Git is required to initialize missing submodules.")
     endif ()
 
     message(STATUS "Initializing missing git submodules: ${missing_submodules}")
@@ -67,23 +62,20 @@ function(pans_init_third_party_submodules)
 
     if (NOT submodule_result EQUAL 0)
         message(FATAL_ERROR
-                "Failed to initialize submodules (exit=${submodule_result}):\n"
-                "${submodule_output}${submodule_error}"
-        )
+                "git submodule update failed (exit=${submodule_result}):\n"
+                "${submodule_output}${submodule_error}")
     endif ()
 
     foreach (entry IN LISTS _pans_required_submodules)
         string(REPLACE "|" ";" parts "${entry}")
         list(GET parts 0 submodule_path)
         list(GET parts 1 sentinel)
-        if (NOT EXISTS "${PROJECT_SOURCE_DIR}${submodule_path}/${sentinel}")
+        if (NOT EXISTS "${PROJECT_SOURCE_DIR}/${submodule_path}/${sentinel}")
             message(FATAL_ERROR
                     "Required third-party source is still missing: "
-                    "${submodule_path}/${sentinel}"
-            )
+                    "${submodule_path}/${sentinel}")
         endif ()
     endforeach ()
-
 endfunction()
 
 pans_init_third_party_submodules()
@@ -93,12 +85,12 @@ function(pans_get_source_revision source_dir output_variable)
         execute_process(
                 COMMAND "${GIT_EXECUTABLE}" -C "${source_dir}" rev-parse HEAD
                 RESULT_VARIABLE revision_result
-                OUTPUT_VARIABLE revision_output
+                OUTPUT_VARIABLE revision
                 ERROR_VARIABLE revision_error
                 OUTPUT_STRIP_TRAILING_WHITESPACE
         )
         if (NOT revision_result EQUAL 0)
-            message(FATAL_ERROR "Failed to read third-party revision in ${source_dir}: ${revison_error}\n")
+            message(FATAL_ERROR "Failed to read third-party revision in ${source_dir}: ${revision_error}")
         endif ()
     else ()
         file(SHA256 "${source_dir}/CMakeLists.txt" revision)
@@ -109,33 +101,33 @@ endfunction()
 function(pans_add_cmake_dependency)
     cmake_parse_arguments(PARSE_ARGV 0 dep ""
             "NAME;SOURCE_DIR;SOURCE_REVISION"
-            "CMAKE_ARGS;SENTINELS;DEPENDS;KEY_MATERIAL"
-    )
+            "CMAKE_ARGS;SENTINELS;DEPENDS;KEY_MATERIAL")
 
     if (NOT dep_NAME OR NOT dep_SOURCE_DIR OR NOT dep_SOURCE_REVISION)
-        message(FATAL_ERROR "pans_add_cmake_dependency: NAME, SOURCE_DIR, SOURCE_REVISION are required")
+        message(FATAL_ERROR "pans_add_cmake_dependency requires NAME, SOURCE_DIR and SOURCE_REVISION")
     endif ()
     if (NOT dep_SENTINELS)
-        message(FATAL_ERROR "pans_add_cmake_dependency(${dep_NAME}): SENTINELS is required")
+        message(FATAL_ERROR "pans_add_cmake_dependency(${dep_NAME}) requires SENTINELS")
     endif ()
-    # 对不同编译器，编译环境影响结果，保证ABI一致
-    string(COMPARE cache_material
+
+    string(CONCAT cache_material
             "${dep_SOURCE_REVISION};${CMAKE_C_COMPILER};${CMAKE_C_COMPILER_ID};"
             "${CMAKE_C_COMPILER_VERSION};${CMAKE_CXX_COMPILER};${CMAKE_CXX_COMPILER_ID};"
             "${CMAKE_CXX_COMPILER_VERSION};${CMAKE_SYSTEM_NAME};${CMAKE_SYSTEM_PROCESSOR};"
             "${CMAKE_GENERATOR};${CMAKE_GENERATOR_PLATFORM};${CMAKE_GENERATOR_TOOLSET};"
             "${CMAKE_OSX_ARCHITECTURES};${CMAKE_OSX_DEPLOYMENT_TARGET};"
             "${CMAKE_MSVC_RUNTIME_LIBRARY};${PANS_THIRD_PARTY_BUILD_TYPE};static;"
-            "${dep_CMAKE_ARGS};${dep_KEY_MATERIAL}}"
-    )
+            "${dep_CMAKE_ARGS};${dep_KEY_MATERIAL}")
+
+    # 任何配置变化都会触发新的编译，保证不会误用前一个结果，从而保证第三方库的ABI一致
     string(SHA256 cache_key "${cache_material}")
     string(SUBSTRING "${cache_key}" 0 16 cache_key_short)
 
     set(install_dir "${PANS_THIRD_PARTY_OUTPUT_DIR}/${dep_NAME}/${cache_key_short}")
     set(build_dir "${PANS_THIRD_PARTY_OUTPUT_DIR}/build/${dep_NAME}-${cache_key_short}")
-    set(cache_stamp "${install_dir}/.pans-cache-${cahce_key}")
+    set(cache_stamp "${install_dir}/.pans-cache-${cache_key}")
 
-    set(install_outputs "${cache_stamp}")
+    set(installed_outputs "${cache_stamp}")
     set(cache_complete TRUE)
     foreach (sentinel IN LISTS dep_SENTINELS)
         if (IS_ABSOLUTE "${sentinel}")
@@ -143,7 +135,7 @@ function(pans_add_cmake_dependency)
         else ()
             set(sentinel_path "${install_dir}/${sentinel}")
         endif ()
-        list(APPEND install_outputs "${sentinel_path}")
+        list(APPEND installed_outputs "${sentinel_path}")
         if (NOT EXISTS "${sentinel_path}")
             set(cache_complete FALSE)
         endif ()
@@ -163,11 +155,12 @@ function(pans_add_cmake_dependency)
 
     list(APPEND configure_command
             "-DCMAKE_INSTALL_PREFIX=${install_dir}"
-            "-DCMAKE_INSTALL_LIBRARY=lib"
+            "-DCMAKE_INSTALL_LIBDIR=lib"
             "-DCMAKE_BUILD_TYPE=${PANS_THIRD_PARTY_BUILD_TYPE}"
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
             "-DBUILD_TESTING=OFF"
     )
+
     if (CMAKE_C_COMPILER)
         list(APPEND configure_command "-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
     endif ()
@@ -187,8 +180,7 @@ function(pans_add_cmake_dependency)
         list(APPEND configure_command "-DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
     endif ()
     list(APPEND configure_command ${dep_CMAKE_ARGS})
-
-    set(build_command
+    set(build_commands
             COMMAND ${configure_command}
             COMMAND "${CMAKE_COMMAND}" --build "${build_dir}" --config "${PANS_THIRD_PARTY_BUILD_TYPE}" --parallel "${CMAKE_BUILD_PARALLEL_LEVEL}"
             COMMAND "${CMAKE_COMMAND}" --install "${build_dir}" --config "${PANS_THIRD_PARTY_BUILD_TYPE}"
@@ -200,16 +192,16 @@ function(pans_add_cmake_dependency)
 
     if (PANS_REUSE_INSTALLED_DEPENDENCIES)
         add_custom_command(
-                OUTPUT ${install_outputs}
-                ${build_command}
+                OUTPUT ${installed_outputs}
+                ${build_commands}
                 COMMENT "Building and installing third-party dependency: ${dep_NAME}"
                 VERBATIM
                 COMMAND_EXPAND_LISTS
         )
-        add_custom_target("${ready_target}" DEPENDS ${install_outputs})
+        add_custom_target("${ready_target}" DEPENDS ${installed_outputs})
     else ()
-        add_custom_target("${ready_targe}"
-                ${build_command}
+        add_custom_target("${ready_target}"
+                ${build_commands}
                 COMMENT "Rebuilding third-party dependency: ${dep_NAME}"
                 VERBATIM
                 COMMAND_EXPAND_LISTS
@@ -222,7 +214,7 @@ function(pans_add_cmake_dependency)
     if (cache_complete AND PANS_REUSE_INSTALLED_DEPENDENCIES)
         message(STATUS "${dep_NAME}: reusing ${install_dir}")
     else ()
-        message(STATUS "${dep_NAME}: build schedule; output ${install_dir}")
+        message(STATUS "${dep_NAME}: build scheduled; output ${install_dir}")
     endif ()
     string(TOUPPER "${dep_NAME}" variable_prefix)
     string(REPLACE "-" "_" variable_prefix "${variable_prefix}")
@@ -403,7 +395,7 @@ if (PANS_YAML_CPP_CACHE_COMPLETE)
 else ()
     file(MAKE_DIRECTORY "${PANS_YAML_CPP_INSTALL_DIR}/include")
     add_library(yaml-cpp::yaml-cpp STATIC IMPORTED GLOBAL)
-    set_target_properties(yaml-cpp::target PROPERTIES
+    set_target_properties(yaml-cpp::yaml-cpp PROPERTIES
             IMPORTED_LOCATION "${PANS_YAML_CPP_INSTALL_DIR}/lib/${_pans_yaml_library}"
             INTERFACE_COMPILE_DEFINITIONS YAML_CPP_STATIC_DEFINE
             INTERFACE_INCLUDE_DIRECTORIES "${PANS_YAML_CPP_INSTALL_DIR}/include"
@@ -416,17 +408,18 @@ foreach (_pans_dependency_install_dir IN ITEMS
         "${PANS_ZLIB_INSTALL_DIR}"
         "${PANS_PROTOBUF_INSTALL_DIR}"
         "${PANS_TINYXML2_INSTALL_DIR}"
-        "${PANS_KCP_INSTALL_DIR}")
+        "${PANS_KCP_INSTALL_DIR}"
+)
     install(
             DIRECTORY "${_pans_dependency_install_dir}/"
-            DESCRIPTION "."
-            PATTERN ".pans-cache" EXCLUDE
+            DESTINATION "."
+            PATTERN ".pans-cache-*" EXCLUDE
     )
 endforeach ()
 
 install(
         DIRECTORY "${PANS_THIRD_PARTY_DIR}/rapidjson/include/"
-        DESCRIPTION "${CMAKE_INSTALL_INCLUDEDIR}"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )
 
 unset(_pans_required_submodules)

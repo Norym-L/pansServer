@@ -4,13 +4,13 @@ project(pans-kcp LANGUAGES C)
 
 include(GNUInstallDirs)
 
-if(NOT PANS_KCP_SOURCE_DIR)
+if (NOT PANS_KCP_SOURCE_DIR)
     message(FATAL_ERROR "PANS_KCP_SOURCE_DIR is required")
-endif()
-if(NOT EXISTS "${PANS_KCP_SOURCE_DIR}/ikcp.c" OR
+endif ()
+if (NOT EXISTS "${PANS_KCP_SOURCE_DIR}/ikcp.c" OR
         NOT EXISTS "${PANS_KCP_SOURCE_DIR}/ikcp.h")
     message(FATAL_ERROR "Invalid KCP source directory: ${PANS_KCP_SOURCE_DIR}")
-endif()
+endif ()
 
 add_library(kcp STATIC "${PANS_KCP_SOURCE_DIR}/ikcp.c")
 add_library(kcp::kcp ALIAS kcp)
