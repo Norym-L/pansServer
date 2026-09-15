@@ -8,7 +8,7 @@
 #include <pans/logger/appender.h>
 #include <pans/logger/log_level.h>
 #include <pans/logger/logger.h>
-#include <pans/macros.h>
+#include <pans/types.h>
 
 namespace pans::detail
 {
