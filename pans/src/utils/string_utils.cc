@@ -29,7 +29,7 @@ static_assert(sizeof(wchar_t) == 2 || sizeof(wchar_t) == 4, "StringUtils require
     return value >= LOW_SURROGATE_FIRST && value <= LOW_SURROGATE_LAST;
 }
 
-void AppendUtf8(std::string &output, u32 code_point)
+void AppendUtf8(std::string& output, u32 code_point)
 {
     if (code_point <= 0x7F)
     {
@@ -55,7 +55,7 @@ void AppendUtf8(std::string &output, u32 code_point)
     }
 }
 
-[[nodiscard]] bool DecodeUtf8CodePoint(std::string_view text, std::size_t &offset, u32 &code_point) noexcept
+[[nodiscard]] bool DecodeUtf8CodePoint(std::string_view text, std::size_t& offset, u32& code_point) noexcept
 {
     const auto first = static_cast<unsigned char>(text[offset++]);
     if (first <= 0x7F)
@@ -112,7 +112,7 @@ void AppendUtf8(std::string &output, u32 code_point)
 }
 }
 
-std::string StringUtils::WStringToString(std::wstring_view text) noexcept
+std::string StringUtils::WStringToString(const std::wstring_view text) noexcept
 {
     try
     {
@@ -156,7 +156,7 @@ std::string StringUtils::WStringToString(std::wstring_view text) noexcept
     }
 }
 
-std::wstring StringUtils::StringToWString(std::string_view text) noexcept
+std::wstring StringUtils::StringToWString(const std::string_view text) noexcept
 {
     try
     {
@@ -194,5 +194,51 @@ std::wstring StringUtils::StringToWString(std::string_view text) noexcept
         ASSERT_NOEFFECT2(false, "UTF-8 转换为宽字符串时发生异常");
         return {};
     }
+}
+
+std::string StringUtils::Trim(const std::string& text, const std::string_view delimiter)
+{
+    return std::string(Trim(std::string_view(text), delimiter));
+}
+
+std::string_view StringUtils::Trim(const std::string_view text, const std::string_view delimiter)
+{
+    const std::size_t begin = text.find_first_not_of(delimiter); // 找到第一个不是 delimiter 的字符的位置
+    if (begin == std::string_view::npos)
+    {
+        return {};
+    }
+    const std::size_t end = text.find_last_not_of(delimiter);
+    return text.substr(begin, end - begin + 1);
+}
+
+std::string StringUtils::TrimLeft(const std::string& text, const std::string_view delimiter)
+{
+    return std::string(TrimLeft(std::string_view(text), delimiter));
+}
+
+std::string_view StringUtils::TrimLeft(const std::string_view text, const std::string_view delimiter)
+{
+    const std::size_t begin = text.find_first_not_of(delimiter);
+    if (begin == std::string_view::npos)
+    {
+        return {};
+    }
+    return text.substr(begin);
+}
+
+std::string StringUtils::TrimRight(const std::string& text, const std::string_view delimiter)
+{
+    return std::string(TrimRight(std::string_view(text), delimiter));
+}
+
+std::string_view StringUtils::TrimRight(const std::string_view text, const std::string_view delimiter)
+{
+    const std::size_t end = text.find_last_not_of(delimiter);
+    if (end == std::string_view::npos)
+    {
+        return {};
+    }
+    return text.substr(0, end + 1);
 }
 }
