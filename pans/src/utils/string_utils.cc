@@ -201,7 +201,7 @@ std::string StringUtils::Trim(const std::string& text, const std::string_view de
     return std::string(Trim(std::string_view(text), delimiter));
 }
 
-std::string_view StringUtils::Trim(const std::string_view text, const std::string_view delimiter)
+std::string_view StringUtils::Trim(const std::string_view text, const std::string_view delimiter) noexcept
 {
     const std::size_t begin = text.find_first_not_of(delimiter); // 找到第一个不是 delimiter 的字符的位置
     if (begin == std::string_view::npos)
@@ -217,7 +217,7 @@ std::string StringUtils::TrimLeft(const std::string& text, const std::string_vie
     return std::string(TrimLeft(std::string_view(text), delimiter));
 }
 
-std::string_view StringUtils::TrimLeft(const std::string_view text, const std::string_view delimiter)
+std::string_view StringUtils::TrimLeft(const std::string_view text, const std::string_view delimiter) noexcept
 {
     const std::size_t begin = text.find_first_not_of(delimiter);
     if (begin == std::string_view::npos)
@@ -232,7 +232,7 @@ std::string StringUtils::TrimRight(const std::string& text, const std::string_vi
     return std::string(TrimRight(std::string_view(text), delimiter));
 }
 
-std::string_view StringUtils::TrimRight(const std::string_view text, const std::string_view delimiter)
+std::string_view StringUtils::TrimRight(const std::string_view text, const std::string_view delimiter) noexcept
 {
     const std::size_t end = text.find_last_not_of(delimiter);
     if (end == std::string_view::npos)
