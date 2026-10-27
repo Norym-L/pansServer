@@ -7,7 +7,7 @@
 #define INVALID64	(~0ULL)
 #define INVALID32	0xFFFFFFFF
 #define INVALID16	0xFFFF
-#define INVALID8		0xFF
+#define INVALID8	0xFF
 //最大值
 #define MAX_U8		0xFF
 #define MAX_U16		0xFFFF
