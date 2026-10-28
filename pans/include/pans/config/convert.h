@@ -1,5 +1,5 @@
-#ifndef PANS_INCLUDE_PANS_CONVERT_H
-#define PANS_INCLUDE_PANS_CONVERT_H
+#ifndef PANS_INCLUDE_PANS_CONFIG_CONVERT_H
+#define PANS_INCLUDE_PANS_CONFIG_CONVERT_H
 
 #include <charconv>
 #include <concepts>
@@ -27,10 +27,10 @@ namespace detail
 /**
  * 抛出转换错误
  * @param type_name 类型名称
- * @param reson 原因
+ * @param reason 原因
  * @param value 值
  */
-[[noreturn]] PANS_API void ThrowConvertError(std::string_view type_name, std::string_view reson, std::string_view value = {});
+[[noreturn]] PANS_API void ThrowConvertError(std::string_view type_name, std::string_view reason, std::string_view value = {});
 // 转换到bool值 (yes no、true false、on off...)
 [[nodiscard]] PANS_API bool ParseBool(std::string_view text, bool& out) noexcept;
 
@@ -132,7 +132,7 @@ public:
         }
         else
         {
-            static_assert(detail::YamlDecodable<T>, "该类型需要特化 pans::ConfigConvert<T> 或 YMAL::convert<T>");
+            static_assert(detail::YamlDecodable<T>, "该类型需要特化 pans::ConfigConvert<T> 或 YAML::convert<T>");
             T value{};
             if (!node.IsDefined() || !YAML::convert<T>::decode(node, value))
             {
@@ -222,7 +222,7 @@ class StringMapConvert // 映射容器（映射到字符串）
 public:
     using mapped_type = typename Map::mapped_type;
 
-    [[nodiscard]] static Map FormMap(const YAML::Node& node)
+    [[nodiscard]] static Map FromNode(const YAML::Node& node)
     {
         if (!node.IsMap())
         {
@@ -281,4 +281,4 @@ class ConfigConvert<std::unordered_map<std::string, T, H, E, A> > : public detai
 {};
 }
 
-#endif //PANS_INCLUDE_PANS_CONVERT_H
+#endif //PANS_INCLUDE_PANS_CONFIG_CONVERT_H

@@ -26,11 +26,11 @@ void ReportConfigError(std::string_view operation, std::string_view name, std::s
                            << " reason=" << reason;
 }
 
-void ThrowConvertError(const std::string_view type_name, const std::string_view reson, const std::string_view value)
+void ThrowConvertError(const std::string_view type_name, const std::string_view reason, const std::string_view value)
 {
     std::string message;
-    message.reserve(type_name.size() + reson.size() + value.size() + 32);
-    message.append("ConfigConvert<").append(type_name).append(">: ").append(reson);
+    message.reserve(type_name.size() + reason.size() + value.size() + 32);
+    message.append("ConfigConvert<").append(type_name).append(">: ").append(reason);
     if (!value.empty())
     {
         message.append(", value=").append(value);
