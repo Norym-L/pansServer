@@ -34,6 +34,7 @@ include(cmake/pansOptions.cmake)
 include(cmake/pansDependencies.cmake)
 include(cmake/functions.cmake)
 
+add_subdirectory(cmake/boost-context)
 add_subdirectory(pans)
 if(PANS_BUILD_TESTS)
     enable_testing()

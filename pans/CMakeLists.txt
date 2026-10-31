@@ -26,6 +26,8 @@ endif ()
 
 target_link_libraries(pans PUBLIC yaml-cpp::yaml-cpp)
 
+target_link_libraries(pans PRIVATE Boost::context)
+
 add_dependencies(pans pans_third_party_dependencies)
 
 target_compile_options(pans PRIVATE
