@@ -21,8 +21,8 @@ public:
 
     enum class State: u8
     {
-        INIT,    // 上下文就绪但是没执行
-        READY,   // 准备执行
+        INIT,    // 任务没开始
+        READY,   // 准备执行 或是 挂起状态恢复准备执行
         EXEC,    // 执行中
         WAITING, // 等待内部步骤执行
         TERM,    // 协程正常终止
@@ -59,8 +59,8 @@ public:
     State resume();
     // 重置协程
     void reset(Callback callback);
-    // 把 WAITING 状态改为 READY
-    [[nodiscard]] bool wake() noexcept;
+    // 唤醒 WAITING 状态的协程
+    [[nodiscard]] bool wake() const noexcept;
     [[nodiscard]] u64 getId() const noexcept;
     [[nodiscard]] State getState() const noexcept;
     [[nodiscard]] WaitReason getWaitReason() const noexcept;
@@ -75,7 +75,7 @@ public:
     [[nodiscard]] static u64 GetFiberId() noexcept;
     [[nodiscard]] static u64 TotalFibers() noexcept;
 
-    static void YteldToReady();
+    static void YieldToReady();
     static void YieldToHold(WaitReason reason = WaitReason::External);
 
     [[nodiscard]] static std::string_view StateName(State state) noexcept;
@@ -83,11 +83,11 @@ public:
 
 private:
     // 初始化协程上下文
-    void initializeContext(Callback callback);
+    void initializeContext(Callback callback) const;
     // 执行 协程栈callback
-    void run();
+    void run() const;
     // 主动挂起让出cpu
-    void yied(State target, WaitReason reason);
+    void yied(State target, WaitReason reason) const;
 
 private:
     struct Impl;
