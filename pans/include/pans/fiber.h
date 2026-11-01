@@ -71,7 +71,7 @@ public:
     [[nodiscard]] bool hasGuardPage() const noexcept;
     [[nodiscard]] std::exception_ptr getException() const noexcept;
     // 重抛异常
-    void rethrowFailed() const;
+    void rethrowIfFailed() const;
 
     /**
      * 获取当前协程指针

@@ -330,15 +330,212 @@ void Scheduler::run()
     t_schedulerFiber = previous_scheduler_fiber;
 }
 
-void Scheduler::stop() {}
-void Scheduler::switchTo(ThreadId thread_id) {}
-std::ostream& Scheduler::dump(std::ostream& output) const {}
-bool Scheduler::canStop() {}
-void Scheduler::idle() {}
-bool Scheduler::hasRunnableTaskNoLock(ThreadId current_thread) const {}
-bool Scheduler::canStopNoLock() const noexcept {}
-void Scheduler::taskFinished() noexcept {}
-void Scheduler::reportFiberFailure(const Fiber::ptr& fiber) const noexcept {}
-SchedulerSwitcher::SchedulerSwitcher(Scheduler* target) {}
-SchedulerSwitcher::~SchedulerSwitcher() noexcept {}
+void Scheduler::taskFinished() noexcept
+{
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_activeThreadCount.fetch_sub(1, std::memory_order_acq_rel);
+    }
+    m_condition.notify_all();
+}
+
+bool Scheduler::hasRunnableTaskNoLock(const ThreadId current_thread) const
+{
+    for (const auto& task: m_tasks)
+    {
+        if (task.valid() && (task.threadId == ANY_THREAD || task.threadId == current_thread))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Scheduler::idle()
+{
+    const ThreadId thread_id = GetThreadId();
+    while (!canStop())
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_condition.wait(lock, [this, thread_id]()
+                             {
+                                 return hasRunnableTaskNoLock(thread_id) || canStopNoLock();
+                             });
+        lock.unlock();
+        if (!canStop())
+        {
+            Fiber::YieldToHold(Fiber::WaitReason::External);
+        }
+    }
+}
+
+void Scheduler::stop()
+{
+    if (GetThis() == this && (!m_useCaller || GetThreadId() != m_rootThreadId)) //  worker 线程不能停止
+    {
+        throw std::logic_error("Scheduler::stop cannot join its current worker therad");
+    }
+    if (m_useCaller && GetThreadId() != m_rootThreadId)
+    {
+        throw std::logic_error("a caller scheduler must be stopped by its construction thread");
+    }
+    std::size_t wake_count{0};
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_autoStop.store(true, std::memory_order_release);
+        m_stopping.store(true, std::memory_order_release);
+        if (!m_started && m_threads.empty() && m_tasks.empty())
+        {
+            return;
+        }
+        wake_count = m_threadCount + (m_rootFiber ? 1 : 0);
+    }
+    m_condition.notify_all();
+    for (std::size_t index = 0; index < wake_count; ++index)
+    {
+        tickle();
+    }
+    if (m_rootFiber && !canStop())
+    {
+        auto state = m_rootFiber->getState();
+        if (state == Fiber::State::WAITING)
+        {
+            (void) m_rootFiber->wake();
+            state = m_rootFiber->getState();
+        }
+        if (state == Fiber::State::INIT || state == Fiber::State::READY)
+        {
+            m_rootFiber->resume();
+        }
+        if (m_rootFiber->getState() == Fiber::State::EXCEPT)
+        {
+            reportFiberFailure(m_rootFiber);
+        }
+    }
+    std::vector<std::thread> threads;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        threads.swap(m_threads);
+    }
+    for (auto& t: threads)
+    {
+        if (t.joinable())
+        {
+            t.join();
+        }
+    }
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_started = false;
+        m_registerWorkers = 0;
+        if (m_useCaller)
+        {
+            m_threadIds.erase(std::ranges::remove_if(
+                m_threadIds,
+                [this](const ThreadId id)
+                    {
+                        return id != m_rootThreadId;
+                    }).begin());
+        }
+        else
+        {
+            m_threadIds.clear();
+        }
+    }
+}
+
+bool Scheduler::canStopNoLock() const noexcept
+{
+    return m_autoStop.load(std::memory_order_acquire) &&
+           m_stopping.load(std::memory_order_acquire) &&
+           m_tasks.empty() &&
+           m_activeThreadCount.load(std::memory_order_acquire) == 0;
+}
+
+void Scheduler::reportFiberFailure(const Fiber::ptr& fiber) const noexcept
+{
+    try
+    {
+        fiber->rethrowIfFailed();
+    }
+    catch (const std::exception& exception)
+    {
+        LOG_ERROR << "scheduler=" << m_name << " fiber=" << fiber->getId() << " feiled: " << exception.what();
+    }
+    catch (...)
+    {
+        LOG_ERROR << "scheduler=" << m_name << " fiber=" << fiber->getId() << " feiled with a unknown excetion";
+    }
+}
+
+bool Scheduler::canStop()
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return canStopNoLock();
+}
+
+void Scheduler::switchTo(const ThreadId thread_id)
+{
+    const Scheduler* const source = GetThis();
+    if (source == this && (thread_id == ANY_THREAD || thread_id == GetThreadId()))
+    {
+        return;
+    }
+    Fiber::ptr current = Fiber::GetThis();
+    if (!current)
+    {
+        throw std::logic_error("Scheduler::switchTo must be called inside a Fiber");
+    }
+    addTask(current, thread_id);
+    Fiber::YieldToHold(Fiber::WaitReason::External);
+}
+
+std::ostream& Scheduler::dump(std::ostream& output) const
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    output << "[Scheduler name=" << m_name
+        << " workers=" << m_threadCount
+        << " active=" << m_activeThreadCount.load(std::memory_order_acquire)
+        << " idle=" << m_idleThreadCount.load(std::memory_order_acquire)
+        << " stopping=" << m_stopping.load(std::memory_order_acquire)
+        << "]\n\t";
+    for (std::size_t index = 0; index < m_threadIds.size(); ++index)
+    {
+        if (index != 0)
+        {
+            output << ", ";
+        }
+        output << m_threadIds[index];
+    }
+    return output;
+}
+
+SchedulerSwitcher::SchedulerSwitcher(Scheduler* target)
+    : m_caller(Scheduler::GetThis())
+{
+    if (target != nullptr)
+    {
+        target->switchTo();
+    }
+}
+
+SchedulerSwitcher::~SchedulerSwitcher() noexcept
+{
+    if (m_caller == nullptr)
+    {
+        return;
+    }
+    try
+    {
+        m_caller->switchTo();
+    }
+    catch (const std::exception& exception)
+    {
+        LOG_ERROR << "SchedulerSwitcher could not return to the caller: " << exception.what();
+    }
+    catch (...)
+    {
+        LOG_ERROR << "SchedulerSwitcher could not return to the caller with unknow error";
+    }
+}
 }

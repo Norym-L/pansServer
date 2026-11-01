@@ -97,7 +97,7 @@ void TestFiber3()
     bool rethrown = false;
     try
     {
-        fiber->rethrowFailed();
+        fiber->rethrowIfFailed();
     }
     catch (const std::runtime_error& e)
     {

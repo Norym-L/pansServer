@@ -217,7 +217,7 @@ std::exception_ptr Fiber::getException() const noexcept
     return m_impl->exception;
 }
 
-void Fiber::rethrowFailed() const
+void Fiber::rethrowIfFailed() const
 {
     if (const std::exception_ptr exception = getException())
     {
