@@ -157,10 +157,10 @@ Fiber::State Fiber::resume()
     return suspend_state;
 }
 
-void Fiber::reset(Callback callback)
+void Fiber::reset(Callback callback) const
 {
     const State state = m_impl->state.load(std::memory_order_acquire);
-    if (state != State::TERM || state != State::EXCEPT)
+    if (state != State::TERM && state != State::EXCEPT)
     {
         throw std::logic_error("fiber can only be reset after TERM or EXCEPT");
     }

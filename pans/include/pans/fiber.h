@@ -55,10 +55,13 @@ public:
     Fiber(Fiber&&) = delete;
     Fiber operator=(Fiber&&) = delete;
 
-    // 转入执行协程
+    /**
+     * 运行协程 <br>
+     * 中途挂起不经过 wake() 会抛出 std::logic_error
+     */
     State resume();
     // 重置协程
-    void reset(Callback callback);
+    void reset(Callback callback) const;
     // 唤醒 WAITING 状态的协程
     [[nodiscard]] bool wake() const noexcept;
     [[nodiscard]] u64 getId() const noexcept;
@@ -70,12 +73,27 @@ public:
     // 重抛异常
     void rethrowFailed() const;
 
+    /**
+     * 获取当前协程指针
+     * @return pans::Fiber*
+     */
     [[nodiscard]] static Fiber* Current() noexcept;
+    /**
+     * 在协程内部获取指向自己的共享指针
+     * @return std::shared_ptr<pans::Fiber>
+     */
     [[nodiscard]] static ptr GetThis();
     [[nodiscard]] static u64 GetFiberId() noexcept;
     [[nodiscard]] static u64 TotalFibers() noexcept;
 
+    /**
+     * 主动挂起，把CPU让给调用者（等待下次自动执行）
+     */
     static void YieldToReady();
+    /**
+     * 主动挂起，把CPU让给调用者（不会自动执行）
+     * @param reason 挂起原因
+     */
     static void YieldToHold(WaitReason reason = WaitReason::External);
 
     [[nodiscard]] static std::string_view StateName(State state) noexcept;
