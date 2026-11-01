@@ -1,8 +1,10 @@
-#include <pans/logger/log_level.h>
 #include <algorithm>
 #include <array>
 #include <cctype>
 #include <string>
+
+#include <pans/logger/log_level.h>
+#include <pans/macros.h>
 
 namespace pans
 {
@@ -24,11 +26,13 @@ std::string_view LogLevel::ToString(Level level) noexcept
 
 LogLevel::Level LogLevel::FromString(std::string_view value) noexcept
 {
-    std::array < char, 6 > normalized{};
-    std::transform(value.begin(), value.end(), normalized.begin(), [](unsigned char character)
-    {
-        return static_cast<char>(std::toupper(character));
-    });
+    std::array<char, 6> normalized{};
+    ASSERT_RETVAL(value.size() < normalized.size(), Level::LOG_LV_INFO);
+
+    std::ranges::transform(value, normalized.begin(), [](const unsigned char character)
+                               {
+                                   return static_cast<char>(std::toupper(character));
+                               });
     const std::string_view upper_value(normalized.begin(), normalized.end());
 #define XX(name) if(upper_value == #name) return Level::LOG_LV_##name;
     XX(DEBUG)
