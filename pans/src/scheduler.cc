@@ -17,15 +17,15 @@ const LoggerPtr g_logger = PANS_LOG_NAME("system");
 thread_local Scheduler* t_scheduler = nullptr;
 thread_local Fiber* t_schedulerFiber = nullptr;
 
-[[nodiscard]] std::string WorkerName(const std::string& scheduler_name, std::size_t index)
+[[nodiscard]] std::string WorkerName(const std::string& scheduler_name, const std::size_t index)
 {
     const std::string base = scheduler_name.empty() ? "scheduler" : scheduler_name;
     return base + "_" + std::to_string(index);
 }
 }
 
-Scheduler::Scheduler(std::size_t threads, const bool use_caller, const std::string& name)
-    : m_name(name), m_useCaller(use_caller)
+Scheduler::Scheduler(std::size_t threads, const bool use_caller, std::string name)
+    : m_name(std::move(name)), m_useCaller(use_caller)
 {
     if (threads <= 0)
     {
@@ -41,7 +41,10 @@ Scheduler::Scheduler(std::size_t threads, const bool use_caller, const std::stri
         --threads;
         m_rootThreadId = GetThreadId();
         m_threadIds.push_back(m_rootThreadId);
-        m_rootFiber = std::make_shared<Fiber>([this]() { run(); });
+        m_rootFiber = std::make_shared<Fiber>([this]()
+            {
+                run();
+            });
         t_scheduler = this;
         t_schedulerFiber = m_rootFiber.get();
         if (!m_name.empty())
@@ -341,14 +344,12 @@ void Scheduler::taskFinished() noexcept
 
 bool Scheduler::hasRunnableTaskNoLock(const ThreadId current_thread) const
 {
-    for (const auto& task: m_tasks)
-    {
-        if (task.valid() && (task.threadId == ANY_THREAD || task.threadId == current_thread))
-        {
-            return true;
-        }
-    }
-    return false;
+    return std::ranges::any_of(m_tasks,
+                               [&](const auto& task)
+                                   {
+                                       return task.valid() && (task.threadId == ANY_THREAD ||
+                                                               task.threadId == current_thread);
+                                   });
 }
 
 void Scheduler::idle()
@@ -405,7 +406,7 @@ void Scheduler::stop()
         }
         if (state == Fiber::State::INIT || state == Fiber::State::READY)
         {
-            m_rootFiber->resume();
+            m_rootFiber->resume(); // 这里唤醒协程执行 run()，阻塞完成所有还在队列里的任务
         }
         if (m_rootFiber->getState() == Fiber::State::EXCEPT)
         {
@@ -476,8 +477,8 @@ bool Scheduler::canStop()
 
 void Scheduler::switchTo(const ThreadId thread_id)
 {
-    const Scheduler* const source = GetThis();
-    if (source == this && (thread_id == ANY_THREAD || thread_id == GetThreadId()))
+    const Scheduler* const source = GetThis();                                     // 当前线程上的调度器（由其他调度器调用）
+    if (source == this && (thread_id == ANY_THREAD || thread_id == GetThreadId())) // 切换到自己
     {
         return;
     }

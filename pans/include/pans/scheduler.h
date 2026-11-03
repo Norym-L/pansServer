@@ -30,7 +30,7 @@ public:
 
     static constexpr ThreadId ANY_THREAD = 0;
 
-    explicit Scheduler(std::size_t threads = 1, bool use_caller = true, const std::string& name = "");
+    explicit Scheduler(std::size_t threads = 1, bool use_caller = true, std::string name = "");
 
     virtual ~Scheduler();
 
@@ -46,6 +46,7 @@ public:
     void start();
     /**
      * 请求停止调度器
+     * <br> 如果启用了 use_caller 将主线程加入执行，暂停时会唤醒主协程阻塞执行完队列剩余的任务
      */
     void stop();
 
@@ -81,6 +82,11 @@ public:
         }
     }
 
+    /**
+     * 将执行此函数的协程切换到这个调度器
+     * <br> 由其他调度器调用
+     * @param thread_id
+     */
     void switchTo(ThreadId thread_id = ANY_THREAD);
 
     std::ostream& dump(std::ostream& output) const;
@@ -152,14 +158,14 @@ private:
 
     [[nodiscard]] static Task MakeTask(Fiber::ptr fiber, const ThreadId thread_id)
     {
-        return Task(std::move(fiber), thread_id);
+        return {std::move(fiber), thread_id};
     }
 
     template<typename Callable>
         requires std::invocable<std::decay_t<Callable> > && std::constructible_from<Callback, Callable>
     [[nodiscard]] static Task MakeTask(Callable&& callback, const ThreadId thread_id)
     {
-        return Task(Callback(std::forward<Callable>(callback)), thread_id);
+        return {Callback(std::forward<Callable>(callback)), thread_id};
     }
 
     template<typename FiberOrCallback>
@@ -210,9 +216,17 @@ protected:
     ThreadId m_rootThreadId{ANY_THREAD};
 };
 
+/**
+ * 构造时切换当前协程执行调度器
+ * <br> 析构时将协程返回原调度器
+ */
 class PANS_API SchedulerSwitcher final
 {
 public:
+    /**
+     * 切换调用此构造的协程的执行调度器
+     * @param target 切换目标
+     */
     explicit SchedulerSwitcher(Scheduler* target = nullptr);
     ~SchedulerSwitcher() noexcept;
 
