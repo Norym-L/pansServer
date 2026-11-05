@@ -47,7 +47,7 @@ public:
 
     [[nodiscard]] static AppenderPtr MakeFileAppender(std::string file_name);
 
-    static void Append(const AppenderPtr &appender, LogLevel::Level level, std::string_view formatted_record);
+    static void Append(const AppenderPtr& appender, LogLevel::Level level, std::string_view formatted_record);
 };
 }
 }

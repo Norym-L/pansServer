@@ -22,7 +22,6 @@ protected:
     Singleton() = default;
     ~Singleton() = default;
 };
-
 }
 
 #endif //PANS_LINCLUDE_PANS_SINGLETON_H

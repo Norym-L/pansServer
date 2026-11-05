@@ -47,13 +47,13 @@ target_compile_options(pans_options INTERFACE
 
 # ===== 覆盖率选项（默认关闭） =====
 option(ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
-if(ENABLE_COVERAGE)
+if (ENABLE_COVERAGE)
     target_compile_options(pans_options INTERFACE
             $<$<CONFIG:Debug>:--coverage>
     )
     target_link_options(pans_options INTERFACE
             $<$<CONFIG:Debug>:--coverage>
     )
-endif()
+endif ()
 
 

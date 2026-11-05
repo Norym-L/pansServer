@@ -28,7 +28,7 @@ public:
     [[nodiscard]] LogLevel::Level getLevel() const noexcept;
 
     void flush(); // 冲流缓冲区提交到脏页
-    void sync(); // 从脏页提交到磁盘缓冲区
+    void sync();  // 从脏页提交到磁盘缓冲区
 private:
     explicit Appender(std::unique_ptr<Impl> impl) noexcept;
     std::unique_ptr<Impl> m_impl;
@@ -39,7 +39,6 @@ using AppenderPtr = std::shared_ptr<Appender>;
 
 [[nodiscard]] PANS_API AppenderPtr MakeStdoutAppender();
 [[nodiscard]] PANS_API AppenderPtr MakeFileAppender(std::string file_name);
-
 }
 
 #endif //PANS_INCLUDE_PANS_LOGGER_APPENDER_H

@@ -20,7 +20,7 @@
 class Singleton
 {
 public:
-    static Singleton *Instance()
+    static Singleton* Instance()
     {
         if (m_instance == nullptr)
         {
@@ -29,22 +29,22 @@ public:
         return m_instance;
     }
 
-    void log(const std::string &msg)
+    void log(const std::string& msg)
     {
         std::cout << "[LOG]: " << msg << std::endl;
     }
 
-    Singleton(const Singleton &) = delete;
-    Singleton(Singleton &&) = delete;
-    Singleton &operator=(const Singleton &) = delete;
-    Singleton &operator=(Singleton &&) = delete;
+    Singleton(const Singleton&) = delete;
+    Singleton(Singleton&&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+    Singleton& operator=(Singleton&&) = delete;
 
 private:
     Singleton() = default;
     ~Singleton() = default;
 
 private:
-    inline static Singleton *m_instance = nullptr;
+    inline static Singleton* m_instance = nullptr;
 };
 
 int main()
@@ -58,7 +58,7 @@ int main()
 class Singleton
 {
 public:
-    static Singleton *Instance()
+    static Singleton* Instance()
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         if (m_instance == nullptr)
@@ -68,22 +68,22 @@ public:
         return m_instance;
     }
 
-    void log(const std::string &msg)
+    void log(const std::string& msg)
     {
         std::cout << "[LOG]: " << msg << std::endl;
     }
 
-    Singleton(const Singleton &) = delete;
-    Singleton(Singleton &&) = delete;
-    Singleton &operator=(const Singleton &) = delete;
-    Singleton &operator=(Singleton &&) = delete;
+    Singleton(const Singleton&) = delete;
+    Singleton(Singleton&&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+    Singleton& operator=(Singleton&&) = delete;
 
 private:
     Singleton() = default;
     ~Singleton() = default;
 
 private:
-    inline static Singleton *m_instance = nullptr;
+    inline static Singleton* m_instance = nullptr;
     inline static std::mutex m_mutex;
 };
 
@@ -99,7 +99,7 @@ int main()
 class Singleton
 {
 public:
-    static Singleton *Instance()
+    static Singleton* Instance()
     {
         if (m_instance == nullptr)
         {
@@ -112,22 +112,22 @@ public:
         return m_instance;
     }
 
-    void log(const std::string &msg)
+    void log(const std::string& msg)
     {
         std::cout << "[LOG]: " << msg << std::endl;
     }
 
-    Singleton(const Singleton &) = delete;
-    Singleton(Singleton &&) = delete;
-    Singleton &operator=(const Singleton &) = delete;
-    Singleton &operator=(Singleton &&) = delete;
+    Singleton(const Singleton&) = delete;
+    Singleton(Singleton&&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+    Singleton& operator=(Singleton&&) = delete;
 
 private:
     Singleton() = default;
     ~Singleton() = default;
 
 private:
-    inline static Singleton *m_instance = nullptr;
+    inline static Singleton* m_instance = nullptr;
     inline static std::mutex m_mutex;
 };
 
@@ -143,9 +143,9 @@ int main()
 class Singleton
 {
 public:
-    static Singleton *Instance()
+    static Singleton* Instance()
     {
-        Singleton *temp = m_instance.load(std::memory_order_acquire);
+        Singleton* temp = m_instance.load(std::memory_order_acquire);
         if (temp == nullptr)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
@@ -159,22 +159,22 @@ public:
         return temp;
     }
 
-    void log(const std::string &msg)
+    void log(const std::string& msg)
     {
         std::cout << "[LOG]: " << msg << std::endl;
     }
 
-    Singleton(const Singleton &) = delete;
-    Singleton(Singleton &&) = delete;
-    Singleton &operator=(const Singleton &) = delete;
-    Singleton &operator=(Singleton &&) = delete;
+    Singleton(const Singleton&) = delete;
+    Singleton(Singleton&&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+    Singleton& operator=(Singleton&&) = delete;
 
 private:
     Singleton() = default;
     ~Singleton() = default;
 
 private:
-    inline static std::atomic<Singleton *> m_instance{};
+    inline static std::atomic<Singleton*> m_instance{};
     inline static std::mutex m_mutex;
 };
 
@@ -190,9 +190,9 @@ template<typename T>
 class Singleton
 {
 public:
-    static T *Instance()
+    static T* Instance()
     {
-        T *temp = m_instance.load(std::memory_order_acquire);
+        T* temp = m_instance.load(std::memory_order_acquire);
         if (temp == nullptr)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
@@ -208,10 +208,10 @@ public:
         return temp;
     }
 
-    Singleton(const Singleton &) = delete;
-    Singleton(Singleton &&) = delete;
-    Singleton &operator=(const Singleton &) = delete;
-    Singleton &operator=(Singleton &&) = delete;
+    Singleton(const Singleton&) = delete;
+    Singleton(Singleton&&) = delete;
+    Singleton& operator=(const Singleton&) = delete;
+    Singleton& operator=(Singleton&&) = delete;
 
 protected:
     Singleton() = default;
@@ -221,7 +221,7 @@ private:
     static void Destroy() noexcept
     {
         // 先撤回已发布的指针，再销毁对象，避免留下悬空的原子指针。
-        T *instance = m_instance.exchange(nullptr, std::memory_order_acq_rel);
+        T* instance = m_instance.exchange(nullptr, std::memory_order_acq_rel);
         delete instance;
     }
 
@@ -229,8 +229,8 @@ private:
     {
     public:
         Cleanup() = default;
-        Cleanup(const Cleanup &) = delete;
-        Cleanup &operator=(const Cleanup &) = delete;
+        Cleanup(const Cleanup&) = delete;
+        Cleanup& operator=(const Cleanup&) = delete;
 
         ~Cleanup()
         {
@@ -245,7 +245,7 @@ private:
         (void) cleanup;
     }
 
-    inline static std::atomic<T *> m_instance{};
+    inline static std::atomic<T*> m_instance{};
     inline static std::mutex m_mutex;
 };
 
@@ -254,7 +254,7 @@ class A : public Singleton<A>
     friend class Singleton<A>;
 
 public:
-    void log(const std::string &msg)
+    void log(const std::string& msg)
     {
         std::cout << "[LOG]: " << msg << " data=" << m_data << std::endl;
     }
@@ -284,12 +284,12 @@ int main()
     for (int i = 0; i < 8; ++i)
     {
         threads.emplace_back([]
-        {
-            A::Instance()->log("Hello Meyers Singleton.5");
-        });
+            {
+                A::Instance()->log("Hello Meyers Singleton.5");
+            });
     }
 
-    for (auto &thread: threads)
+    for (auto& thread: threads)
     {
         thread.join();
     }

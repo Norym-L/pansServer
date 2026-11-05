@@ -9,7 +9,7 @@ class A : public pans::Singleton<A>
     friend class pans::Singleton<A>;
 
 public:
-    void log(const std::string &msg)
+    void log(const std::string& msg)
     {
         std::cout << "[LOG]: " << msg << " m_data=" << m_data << std::endl;
     }
@@ -40,11 +40,11 @@ int main()
     for (int i = 0; i < 7; ++i)
     {
         threads.emplace_back([]()
-        {
-            A::Instance().log("Hello, Meyers Singlton");
-        });
+            {
+                A::Instance().log("Hello, Meyers Singlton");
+            });
     }
-    for (auto &thread: threads)
+    for (auto& thread: threads)
     {
         thread.join();
     }

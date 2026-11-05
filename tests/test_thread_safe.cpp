@@ -24,7 +24,7 @@ int main()
     {
         threads.emplace_back(add_money);
     }
-    for (auto &t: threads)
+    for (auto& t: threads)
     {
         t.join();
     }

@@ -35,9 +35,9 @@ public:
     virtual ~Scheduler();
 
     Scheduler(const Scheduler&) = delete;
-    Scheduler operator=(const Scheduler&) = delete;
+    Scheduler& operator=(const Scheduler&) = delete;
     Scheduler(Scheduler&&) = delete;
-    Scheduler operator=(Scheduler&&) = delete;
+    Scheduler& operator=(Scheduler&&) = delete;
 
     [[nodiscard]] const std::string& getName() { return m_name; }
     [[nodiscard]] static Scheduler* GetThis() noexcept;
@@ -231,9 +231,9 @@ public:
     ~SchedulerSwitcher() noexcept;
 
     SchedulerSwitcher(const SchedulerSwitcher&) = delete;
-    SchedulerSwitcher operator=(const SchedulerSwitcher&) = delete;
+    SchedulerSwitcher& operator=(const SchedulerSwitcher&) = delete;
     SchedulerSwitcher(SchedulerSwitcher&&) = delete;
-    SchedulerSwitcher operator=(SchedulerSwitcher&&) = delete;
+    SchedulerSwitcher& operator=(SchedulerSwitcher&&) = delete;
 
 private:
     Scheduler* m_caller = nullptr;

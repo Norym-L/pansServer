@@ -14,16 +14,16 @@ Formatter::Formatter(std::string_view pattern)
     }
 }
 
-void Formatter::format(const LogRecordView &record, FormattedRecordBuffer &output) const
+void Formatter::format(const LogRecordView& record, FormattedRecordBuffer& output) const
 {
-    for (const auto &item: m_items)
+    for (const auto& item: m_items)
     {
         item->format(record, output);
     }
 }
 
 template<typename T>
-void AppendInteger(FormattedRecordBuffer &output, T value)
+void AppendInteger(FormattedRecordBuffer& output, T value)
 {
     std::array < char, 24 > buffer{};
     const auto result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), value);
@@ -38,7 +38,7 @@ public:
         : m_value(std::move(value))
     {}
 
-    void format(const LogRecordView &, FormattedRecordBuffer &output) const override
+    void format(const LogRecordView&, FormattedRecordBuffer& output) const override
     {
         output.append(m_value);
     }
@@ -50,7 +50,7 @@ private:
 class MessageFormatItem final : public Formatter::FormatItem
 {
 public:
-    void format(const LogRecordView &record, FormattedRecordBuffer &output) const override
+    void format(const LogRecordView& record, FormattedRecordBuffer& output) const override
     {
         output.append(record.m_message);
     }
@@ -59,7 +59,7 @@ public:
 class LevelFormatItem final : public Formatter::FormatItem
 {
 public:
-    void format(const LogRecordView &record, FormattedRecordBuffer &output) const override
+    void format(const LogRecordView& record, FormattedRecordBuffer& output) const override
     {
         output.append(LogLevel::ToString(record.m_level));
     }
@@ -68,7 +68,7 @@ public:
 class ElampseFormatItem final : public Formatter::FormatItem
 {
 public:
-    void format(const LogRecordView &record, FormattedRecordBuffer &output) const override
+    void format(const LogRecordView& record, FormattedRecordBuffer& output) const override
     {
         AppendInteger(output, std::chrono::duration_cast<std::chrono::milliseconds>(record.m_elapsed).count());
     }
@@ -77,7 +77,7 @@ public:
 class LoggerNameFormatItem final : public Formatter::FormatItem
 {
 public:
-    void format(const LogRecordView &record, FormattedRecordBuffer &output) const override
+    void format(const LogRecordView& record, FormattedRecordBuffer& output) const override
     {
         output.append(record.m_loggerName);
     }
@@ -86,7 +86,7 @@ public:
 class ThreadIdFormatItem final : public Formatter::FormatItem
 {
 public:
-    void format(const LogRecordView &record, FormattedRecordBuffer &output) const override
+    void format(const LogRecordView& record, FormattedRecordBuffer& output) const override
     {
         AppendInteger(output, record.m_threadId);
     }
@@ -95,7 +95,7 @@ public:
 class NewLineFormatItem final : public Formatter::FormatItem
 {
 public:
-    void format(const LogRecordView &, FormattedRecordBuffer &output) const override
+    void format(const LogRecordView&, FormattedRecordBuffer& output) const override
     {
         output.append("\n");
     }
@@ -108,7 +108,7 @@ public:
         : m_format(format.empty() ? DEFAULT_DATE_FORMAT : format)
     {}
 
-    void format(const LogRecordView &record, FormattedRecordBuffer &output) const override
+    void format(const LogRecordView& record, FormattedRecordBuffer& output) const override
     {
         static thread_local time_t last_second = 0;
         static thread_local char cached_date_time[20] = {'\0'};
@@ -122,7 +122,7 @@ public:
             const error_t result = localtime_s(&buffer, &current_second);
             ASSERT_RETNONE2(result == 0, "failed to convert log time to local time.");
 #else
-            const std::tm *result = localtime_r(&current_second, &buffer);
+            const std::tm* result = localtime_r(&current_second, &buffer);
             ASSERT_RETNONE2(result != nullptr, "failed to convert log time to local time.");
 #endif
             const std::size_t size = std::strftime(cached_date_time, sizeof(cached_date_time), m_format.c_str(),
@@ -140,7 +140,7 @@ private:
 class MicrosecondsFormatItem final : public Formatter::FormatItem
 {
 public:
-    void format(const LogRecordView &record, FormattedRecordBuffer &output) const override
+    void format(const LogRecordView& record, FormattedRecordBuffer& output) const override
     {
         const auto total_microseconds = std::chrono::duration_cast<std::chrono::microseconds>(
             record.m_timestamp.time_since_epoch()).count();
@@ -167,7 +167,7 @@ private:
 class FileNameFormatItem final : public Formatter::FormatItem
 {
 public:
-    void format(const LogRecordView &record, FormattedRecordBuffer &output) const override
+    void format(const LogRecordView& record, FormattedRecordBuffer& output) const override
     {
         output.append(record.m_fileName);
     }
@@ -176,7 +176,7 @@ public:
 class LineFormatItem final : public Formatter::FormatItem
 {
 public:
-    void format(const LogRecordView &record, FormattedRecordBuffer &output) const override
+    void format(const LogRecordView& record, FormattedRecordBuffer& output) const override
     {
         AppendInteger(output, record.m_line);
     }
@@ -185,7 +185,7 @@ public:
 class TabFormatItem final : public Formatter::FormatItem
 {
 public:
-    void format(const LogRecordView &, FormattedRecordBuffer &output) const override
+    void format(const LogRecordView&, FormattedRecordBuffer& output) const override
     {
         output.append('\t');
     }
@@ -194,7 +194,7 @@ public:
 class FiberIdFormatItem final : public Formatter::FormatItem
 {
 public:
-    void format(const LogRecordView &record, FormattedRecordBuffer &output) const override
+    void format(const LogRecordView& record, FormattedRecordBuffer& output) const override
     {
         AppendInteger(output, record.m_fiberId);
     }
@@ -203,7 +203,7 @@ public:
 class ThreadNameFormatItem final : public Formatter::FormatItem
 {
 public:
-    void format(const LogRecordView &record, FormattedRecordBuffer &output) const override
+    void format(const LogRecordView& record, FormattedRecordBuffer& output) const override
     {
         output.append(record.m_threadName);
     }
@@ -223,7 +223,7 @@ template<typename Item>
     return std::make_unique<Item>(format);
 }
 
-[[nodiscard]] const std::unordered_map<char, FormatItemFactory> &GetFormatItemFactories()
+[[nodiscard]] const std::unordered_map<char, FormatItemFactory>& GetFormatItemFactories()
 {
     static const std::unordered_map<char, FormatItemFactory> FORMAT_ITEM_FACTORIES{
         {'m', &CreateSimpleFormatItem<MessageFormatItem>},      // 程序员写日志时插入的message
@@ -245,13 +245,13 @@ template<typename Item>
 
 [[nodiscard]] std::unique_ptr<Formatter::FormatItem> CreateFormatItem(char directive, std::string_view format)
 {
-    const auto &factories = GetFormatItemFactories();
+    const auto& factories = GetFormatItemFactories();
     const auto it = factories.find(directive);
     ASSERT_RETVAL2(it != factories.end(), nullptr, "unknow logger format directive: " << directive << ".");
     return it->second(format);
 }
 
-void Formatter::addLiteral(std::string &literal)
+void Formatter::addLiteral(std::string& literal)
 {
     if (literal.empty())
     {
@@ -290,7 +290,7 @@ int Formatter::parse()
         m_items.push_back(CreateFormatItem(directive, item_format));
     }
     addLiteral(literal);
-    for (const auto &item: m_items)
+    for (const auto& item: m_items)
     {
         ASSERT_RETVAL2(item != nullptr, -3, "logger formatter contains a null format item.");
     }

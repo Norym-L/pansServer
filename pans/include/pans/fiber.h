@@ -51,9 +51,9 @@ public:
     ~Fiber() noexcept;
 
     Fiber(const Fiber&) = delete;
-    Fiber operator=(const Fiber&) = delete;
+    Fiber& operator=(const Fiber&) = delete;
     Fiber(Fiber&&) = delete;
-    Fiber operator=(Fiber&&) = delete;
+    Fiber& operator=(Fiber&&) = delete;
 
     /**
      * 运行协程 <br>

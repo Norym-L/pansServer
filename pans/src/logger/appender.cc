@@ -105,7 +105,7 @@ protected:
 class FileAppenderImpl final : public Appender::Impl
 {
 public:
-    explicit FileAppenderImpl(const std::string &file_name)
+    explicit FileAppenderImpl(const std::string& file_name)
     {
         if (file_name.empty())
         {
@@ -148,7 +148,7 @@ protected:
     }
 
 private:
-    std::FILE *m_file = nullptr;
+    std::FILE* m_file = nullptr;
 };
 
 AppenderPtr detail::AppenderAccess::MakeStdoutAppender()
@@ -161,7 +161,7 @@ AppenderPtr detail::AppenderAccess::MakeFileAppender(std::string file_name)
     return AppenderPtr(new Appender(std::make_unique<FileAppenderImpl>(file_name)));
 }
 
-void detail::AppenderAccess::Append(const AppenderPtr &appender, LogLevel::Level level,
+void detail::AppenderAccess::Append(const AppenderPtr& appender, LogLevel::Level level,
                                     std::string_view formatted_record)
 {
     if (appender != nullptr)

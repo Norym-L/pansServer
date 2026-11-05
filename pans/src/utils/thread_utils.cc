@@ -34,7 +34,7 @@ namespace
 #if defined(_WIN32)
 struct LocalFreeDeleter
 {
-    void operator()(wchar_t *value) const noexcept
+    void operator()(wchar_t* value) const noexcept
     {
         if (value != nullptr)
         {

@@ -25,9 +25,9 @@ public:
 
     ~Spinlock() noexcept = default;
 
-    Spinlock(const Spinlock &) = delete;
+    Spinlock(const Spinlock&) = delete;
 
-    Spinlock &operator=(const Spinlock &) = delete;
+    Spinlock& operator=(const Spinlock&) = delete;
 
     void lock() noexcept
     {
@@ -62,7 +62,7 @@ std::uint64_t OperationsForThread(std::size_t thread_index, std::size_t thread_c
 }
 
 template<typename Operation>
-std::chrono::nanoseconds BenchmarkThreads(std::uint64_t thread_count, Operation &&operation)
+std::chrono::nanoseconds BenchmarkThreads(std::uint64_t thread_count, Operation&& operation)
 {
     std::latch ready(static_cast<std::ptrdiff_t>(thread_count));
     std::latch start_gate(1);
@@ -73,12 +73,12 @@ std::chrono::nanoseconds BenchmarkThreads(std::uint64_t thread_count, Operation 
     for (std::size_t thread_index = 0; thread_index < thread_count; ++thread_index)
     {
         threads.emplace_back([&, thread_index]()
-        {
-            ready.count_down();
-            start_gate.wait();
-            operation(thread_index, OperationsForThread(thread_index, thread_count));
-            finished.count_down();
-        });
+            {
+                ready.count_down();
+                start_gate.wait();
+                operation(thread_index, OperationsForThread(thread_index, thread_count));
+                finished.count_down();
+            });
     }
 
     ready.wait();
@@ -87,7 +87,7 @@ std::chrono::nanoseconds BenchmarkThreads(std::uint64_t thread_count, Operation 
     finished.wait();
     const auto end = std::chrono::steady_clock::now();
 
-    for (std::thread &thread: threads)
+    for (std::thread& thread: threads)
     {
         thread.join();
     }
@@ -100,13 +100,13 @@ std::chrono::nanoseconds BenchmarkMutex(std::size_t thread_count)
     Mutex mutex;
     g_Counter = 0;
     const auto elapsed = BenchmarkThreads(thread_count, [&mutex](std::size_t, uint64_t operations)
-    {
-        for (uint64_t index = 0; index < operations; ++index)
-        {
-            std::lock_guard<Mutex> lock(mutex);
-            ++g_Counter;
-        }
-    });
+                                              {
+                                                  for (uint64_t index = 0; index < operations; ++index)
+                                                  {
+                                                      std::lock_guard<Mutex> lock(mutex);
+                                                      ++g_Counter;
+                                                  }
+                                              });
     if (g_Counter != g_target)
     {
         throw std::logic_error("mutex correctness check failed");
@@ -117,7 +117,7 @@ std::chrono::nanoseconds BenchmarkMutex(std::size_t thread_count)
 
 
 template<typename Benchmark>
-double Run(Benchmark &&benchmark)
+double Run(Benchmark&& benchmark)
 {
     long double total_nanoseconds = 0.0L;
     for (int run = 0; run < RUNS; ++run)
@@ -131,11 +131,11 @@ void PrintResult(std::string_view name, double total_nanoseconds)
 {
     const double nanoseconds_per_operation = total_nanoseconds / static_cast<double>(g_target);
     std::cout << std::left << std::setw(30) << name << std::right
-            << total_nanoseconds << " ns \ttotal, "
-            << nanoseconds_per_operation << " ns/op\n";
+        << total_nanoseconds << " ns \ttotal, "
+        << nanoseconds_per_operation << " ns/op\n";
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     if (argc != 2)
     {

@@ -26,7 +26,7 @@ std::string_view LogLevel::ToString(Level level) noexcept
 
 LogLevel::Level LogLevel::FromString(std::string_view value) noexcept
 {
-    std::array<char, 6> normalized{};
+    std::array < char, 6 > normalized{};
     ASSERT_RETVAL(value.size() < normalized.size(), Level::LOG_LV_INFO);
 
     std::ranges::transform(value, normalized.begin(), [](const unsigned char character)

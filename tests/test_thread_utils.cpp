@@ -23,15 +23,15 @@ int main()
     std::cout << "5: main thread name: " << pans::GetThreadName() << std::endl;
     sleep(5);
     std::thread woker([]()
-    {
-        std::cout << "6: son thread id: " << pans::GetThreadId() << std::endl;
-        std::cout << "7: son hread name: " << pans::GetThreadName() << std::endl;
-        sleep(5);
-        pans::SetThreadName("son-thread-name-longggggggg");
-        std::cout << "8: son hread name: " << pans::GetThreadName() << std::endl;
-        sleep(5);
-        pans::SetThreadName(""); // 失败日志
-        std::cout << "9: son hread name: " << pans::GetThreadName() << std::endl;
-    });
+        {
+            std::cout << "6: son thread id: " << pans::GetThreadId() << std::endl;
+            std::cout << "7: son hread name: " << pans::GetThreadName() << std::endl;
+            sleep(5);
+            pans::SetThreadName("son-thread-name-longggggggg");
+            std::cout << "8: son hread name: " << pans::GetThreadName() << std::endl;
+            sleep(5);
+            pans::SetThreadName(""); // 失败日志
+            std::cout << "9: son hread name: " << pans::GetThreadName() << std::endl;
+        });
     woker.join();
 }

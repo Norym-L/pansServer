@@ -4,7 +4,7 @@
 
 void test_time(int times)
 {
-    const std::string &format = "%Y-%m-%d %H:%M:%S";
+    const std::string& format = "%Y-%m-%d %H:%M:%S";
     static thread_local time_t last_second = 0;
     static thread_local char cached_date_time[20] = {'\0'};
     auto t1 = std::chrono::steady_clock::now();
@@ -49,7 +49,7 @@ void test_time(int times)
     std::cout << "优化倍率：" << static_cast<double>(diff1_ns) / diff2_ns << " ns\n";
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     if (argc < 2)
     {

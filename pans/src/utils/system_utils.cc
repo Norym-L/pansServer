@@ -44,7 +44,7 @@ namespace
 {
 #if defined(_WIN32)
 
-std::mutex &GetDbgHelpMutex()
+std::mutex& GetDbgHelpMutex()
 {
     static std::mutex mutex;
     return mutex;
@@ -68,8 +68,8 @@ public:
         }
     }
 
-    DbgHelpContext(const DbgHelpContext &) = delete;
-    DbgHelpContext &operator=(const DbgHelpContext &) = delete;
+    DbgHelpContext(const DbgHelpContext&) = delete;
+    DbgHelpContext& operator=(const DbgHelpContext&) = delete;
 
     [[nodiscard]] HANDLE process() const noexcept
     {
@@ -86,7 +86,7 @@ private:
     bool m_initialized{false};
 };
 
-DbgHelpContext &GetDbgHelpContext()
+DbgHelpContext& GetDbgHelpContext()
 {
     static DbgHelpContext context;
     return context;
@@ -99,7 +99,7 @@ DbgHelpContext &GetDbgHelpContext()
  * @param frame 调用栈显示的函数的地址
  * @param is_return_address 是否返回地址
  */
-void WriteWindowsFrame(std::ostringstream &stream, const DbgHelpContext &context, void *frame, bool is_return_address)
+void WriteWindowsFrame(std::ostringstream& stream, const DbgHelpContext& context, void* frame, bool is_return_address)
 {
     auto address = static_cast<DWORD64>(reinterpret_cast<std::uintptr_t>(frame));
     if (is_return_address && address > 0)
@@ -145,7 +145,7 @@ void WriteWindowsFrame(std::ostringstream &stream, const DbgHelpContext &context
 
 struct FreeDeleter final
 {
-    void operator()(void *ptr) const noexcept
+    void operator()(void* ptr) const noexcept
     {
         std::free(ptr);
     }
@@ -153,7 +153,7 @@ struct FreeDeleter final
 
 struct DwflDeleter final
 {
-    void operator()(Dwfl *dwfl) const noexcept
+    void operator()(Dwfl* dwfl) const noexcept
     {
         dwfl_end(dwfl);
     }
@@ -179,7 +179,7 @@ public:
         }
     }
 
-    [[nodiscard]] std::string parse(void *frame, bool is_return_address) const
+    [[nodiscard]] std::string parse(void* frame, bool is_return_address) const
     {
         if (!m_dwfl)
         {
@@ -190,13 +190,13 @@ public:
         {
             --address;
         }
-        Dwfl_Line *line = dwfl_getsrc(m_dwfl.get(), address);
+        Dwfl_Line* line = dwfl_getsrc(m_dwfl.get(), address);
         if (line == nullptr)
         {
             return {};
         }
         int line_number = 0;
-        const char *file_name = dwfl_lineinfo(line, nullptr, &line_number, nullptr, nullptr, nullptr);
+        const char* file_name = dwfl_lineinfo(line, nullptr, &line_number, nullptr, nullptr, nullptr);
         if (file_name == nullptr || line_number <= 0)
         {
             return {};
@@ -209,7 +209,7 @@ private:
 };
 
 /// 模块名(符号名+偏移)[地址] -> 反修饰c++字段名称
-std::string DemangleBacktraceSymbol(const char *symbol)
+std::string DemangleBacktraceSymbol(const char* symbol)
 {
     const std::string_view text(symbol == nullptr ? "" : symbol);
     const auto name_begin = text.find('(');
@@ -240,7 +240,7 @@ std::string DemangleBacktraceSymbol(const char *symbol)
 #endif
 }
 
-std::string GetBacktrace(int size, int skip, const std::string &prefix)
+std::string GetBacktrace(int size, int skip, const std::string& prefix)
 {
     if (size <= 0)
     {
@@ -248,7 +248,7 @@ std::string GetBacktrace(int size, int skip, const std::string &prefix)
     }
 #if defined(_WIN32)
     const int capture_size = std::min(size, static_cast<int>(std::numeric_limits<USHORT>::max()));
-    std::vector<void *> frames(static_cast<std::size_t>(capture_size));
+    std::vector<void*> frames(static_cast<std::size_t>(capture_size));
     const int frame_count = static_cast<int>(CaptureStackBackTrace(0, static_cast<DWORD>(frames.size()), frames.data(), nullptr));
     if (frame_count <= 0)
     {
@@ -257,7 +257,7 @@ std::string GetBacktrace(int size, int skip, const std::string &prefix)
     std::ostringstream stream;
     const int first_frame = std::clamp(skip, 0, frame_count);
     std::lock_guard<std::mutex> lock(GetDbgHelpMutex());
-    const DbgHelpContext &context = GetDbgHelpContext();
+    const DbgHelpContext& context = GetDbgHelpContext();
     for (int i = first_frame; i < frame_count; ++i)
     {
         stream << prefix << '#' << i - first_frame << " ";
@@ -266,13 +266,13 @@ std::string GetBacktrace(int size, int skip, const std::string &prefix)
     }
     return stream.str();
 #else
-    std::vector<void *> frames(static_cast<std::size_t>(size));
+    std::vector<void*> frames(static_cast<std::size_t>(size));
     const int frame_count = ::backtrace(frames.data(), size);
     if (frame_count <= 0)
     {
         return {};
     }
-    std::unique_ptr<char *, FreeDeleter> symbols(::backtrace_symbols(frames.data(), frame_count));
+    std::unique_ptr<char*, FreeDeleter> symbols(::backtrace_symbols(frames.data(), frame_count));
     if (!symbols)
     {
         return {};
@@ -293,5 +293,4 @@ std::string GetBacktrace(int size, int skip, const std::string &prefix)
     return stream.str();
 #endif
 }
-
 }

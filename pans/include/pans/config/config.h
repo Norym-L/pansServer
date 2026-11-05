@@ -23,7 +23,7 @@ class PANS_API Config final
 {
 public:
     using ConfigVarMap = std::unordered_map<std::string, ConfigVarBase::ptr>;
-    using VisitFn = std::function<void(ConfigVarBase::ptr&)>;
+    using VisitFn = std::function<void(ConfigVarBase::ptr &)>;
 
     Config() = delete;
 

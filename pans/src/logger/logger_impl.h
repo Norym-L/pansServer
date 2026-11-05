@@ -19,7 +19,7 @@ class Logger::Impl
 public:
     explicit Impl(std::string name);
     [[nodiscard]] bool shouldLog(LogLevel::Level level) const noexcept;
-    void submit(const detail::LogRecordView &record) noexcept;
+    void submit(const detail::LogRecordView& record) noexcept;
     void setLevel(LogLevel::Level level) noexcept;
     [[nodiscard]] LogLevel::Level getLevel() const noexcept;
     [[nodiscard]] std::string_view getName() const noexcept;
@@ -27,7 +27,7 @@ public:
     [[nodiscard]] std::shared_ptr<const detail::Formatter> getFormatter() const noexcept;
 
     void addAppender(AppenderPtr appender);
-    void removeAppender(const AppenderPtr &appender);
+    void removeAppender(const AppenderPtr& appender);
     void clearAppenders();
 
     void flush();
@@ -49,8 +49,8 @@ namespace detail
 class LoggerAccess final
 {
 public:
-    static void Submit(Logger &logger, const LogRecordView &record) noexcept;
-    static void SetRoot(Logger &logger, LoggerPtr root) noexcept;
+    static void Submit(Logger& logger, const LogRecordView& record) noexcept;
+    static void SetRoot(Logger& logger, LoggerPtr root) noexcept;
 };
 }
 }

@@ -35,7 +35,7 @@ std::uint64_t WriteWithStringStream(std::string_view message)
 }
 
 template<typename Operation>
-std::chrono::nanoseconds BenchmarkWrites(Operation &&operation)
+std::chrono::nanoseconds BenchmarkWrites(Operation&& operation)
 {
     std::uint64_t checksum = 0;
     const auto begin = std::chrono::steady_clock::now();
@@ -49,7 +49,7 @@ std::chrono::nanoseconds BenchmarkWrites(Operation &&operation)
 }
 
 template<typename Benchmark>
-double Run(Benchmark &&benchmark)
+double Run(Benchmark&& benchmark)
 {
     long double total_nanoseconds = 0.0L;
     for (int run = 0; run < RUNS; ++run)
@@ -61,7 +61,7 @@ double Run(Benchmark &&benchmark)
 
 void PrintResult(std::string_view name, double total_nanoseconds) { std::cout << std::left << std::setw(30) << name << std::right << total_nanoseconds << " ns \ttotal, " << total_nanoseconds / static_cast<double>(g_target) << " ns/op\n"; }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     if (argc != 2)
     {
@@ -76,11 +76,13 @@ int main(int argc, char *argv[])
     for (const auto message_size: MESSAGE_SIZES)
     {
         const std::string message(message_size, 'x');
-        const double small_stream_buffer_nanoseconds = Run([&]() {
-            return BenchmarkWrites([&]() {
-                return WriteWithSmallStreamBuffer(message);
+        const double small_stream_buffer_nanoseconds = Run([&]()
+            {
+                return BenchmarkWrites([&]()
+                    {
+                        return WriteWithSmallStreamBuffer(message);
+                    });
             });
-        });
         const double stringstream_nanoseconds = Run([&]() { return BenchmarkWrites([&]() { return WriteWithStringStream(message); }); });
         std::cout << "message: " << message_size << " characters" << std::endl;
         PrintResult("SmallStreamBuffer", small_stream_buffer_nanoseconds);

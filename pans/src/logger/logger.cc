@@ -59,7 +59,7 @@ void Logger::addAppender(AppenderPtr appender)
     m_impl->addAppender(appender);
 }
 
-void Logger::removeAppender(const AppenderPtr &appender)
+void Logger::removeAppender(const AppenderPtr& appender)
 {
     m_impl->removeAppender(appender);
 }
@@ -105,7 +105,7 @@ bool Logger::Impl::shouldLog(LogLevel::Level level) const noexcept
     return m_root != nullptr && m_root->shouldLog(level); // 交给主日志器
 }
 
-void Logger::Impl::submit(const detail::LogRecordView &record) noexcept
+void Logger::Impl::submit(const detail::LogRecordView& record) noexcept
 {
     if (static_cast<u8>(record.m_level) < static_cast<u8>(getLevel()))
     {
@@ -125,7 +125,7 @@ void Logger::Impl::submit(const detail::LogRecordView &record) noexcept
     {
         detail::FormattedRecordBuffer formatted_record;
         m_formatter->format(record, formatted_record);
-        for (const AppenderPtr &appender: m_appenders)
+        for (const AppenderPtr& appender: m_appenders)
         {
             detail::AppenderAccess::Append(appender, record.m_level, formatted_record.view());
         }
@@ -172,7 +172,7 @@ void Logger::Impl::addAppender(AppenderPtr appender)
     m_appenders.push_back(std::move(appender));
 }
 
-void Logger::Impl::removeAppender(const AppenderPtr &appender)
+void Logger::Impl::removeAppender(const AppenderPtr& appender)
 {
     std::unique_lock<std::shared_mutex> lock(m_mutex);
     std::erase(m_appenders, appender);
@@ -196,7 +196,7 @@ void Logger::Impl::flush()
         }
         return;
     }
-    for (const AppenderPtr &appender: m_appenders)
+    for (const AppenderPtr& appender: m_appenders)
     {
         appender->flush();
     }
@@ -214,7 +214,7 @@ void Logger::Impl::sync()
         }
         return;
     }
-    for (const AppenderPtr &appender: m_appenders)
+    for (const AppenderPtr& appender: m_appenders)
     {
         appender->sync();
     }
@@ -225,12 +225,12 @@ void Logger::Impl::setRoot(LoggerPtr root) noexcept
     m_root = root;
 }
 
-void detail::LoggerAccess::Submit(Logger &logger, const LogRecordView &record) noexcept
+void detail::LoggerAccess::Submit(Logger& logger, const LogRecordView& record) noexcept
 {
     logger.m_impl->submit(record);
 }
 
-void detail::LoggerAccess::SetRoot(Logger &logger, LoggerPtr root) noexcept
+void detail::LoggerAccess::SetRoot(Logger& logger, LoggerPtr root) noexcept
 {
     logger.m_impl->setRoot(root);
 }
@@ -271,7 +271,7 @@ private:
     LoggerPtr m_root;
 };
 
-LoggerManager &GetLoggerManager()
+LoggerManager& GetLoggerManager()
 {
     static LoggerManager instance;
     return instance;

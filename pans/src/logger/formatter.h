@@ -21,19 +21,19 @@ public:
     public:
         virtual ~FormatItem() = default;
 
-        virtual void format(const LogRecordView &record, FormattedRecordBuffer &output) const = 0;
+        virtual void format(const LogRecordView& record, FormattedRecordBuffer& output) const = 0;
     };
 
     explicit Formatter(std::string_view pattern);
 
-    void format(const LogRecordView &record, FormattedRecordBuffer &output) const;
+    void format(const LogRecordView& record, FormattedRecordBuffer& output) const;
 
-    [[nodiscard]] const std::string &getPatern() const noexcept { return m_patern; }
+    [[nodiscard]] const std::string& getPatern() const noexcept { return m_patern; }
 
 private:
     int parse();
 
-    void addLiteral(std::string &literal);
+    void addLiteral(std::string& literal);
 
 private:
     std::string m_patern = "";

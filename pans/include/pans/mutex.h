@@ -40,9 +40,9 @@ public:
         pthread_spin_destroy(&m_mutex);
     }
 
-    Spinlock(const Spinlock &) = delete;
+    Spinlock(const Spinlock&) = delete;
 
-    Spinlock &operator=(const Spinlock &) = delete;
+    Spinlock& operator=(const Spinlock&) = delete;
 
     void lock() noexcept
     {
@@ -69,9 +69,9 @@ public:
 
     ~Spinlock() noexcept = default;
 
-    Spinlock(const Spinlock &) = delete;
+    Spinlock(const Spinlock&) = delete;
 
-    Spinlock &operator=(const Spinlock &) = delete;
+    Spinlock& operator=(const Spinlock&) = delete;
 
     void lock() noexcept
     {

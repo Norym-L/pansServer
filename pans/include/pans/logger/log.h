@@ -15,14 +15,14 @@ namespace pans::detail
 class PANS_API LogLine final
 {
 public:
-    LogLine(Logger &logger, LogLevel::Level level, u32 line, std::string_view file_name);
+    LogLine(Logger& logger, LogLevel::Level level, u32 line, std::string_view file_name);
     ~LogLine() noexcept;
-    LogLine(const LogLine &) = delete;
-    LogLine operator=(const LogLine &) = delete;
-    LogLine(LogLine &&) = delete;
-    LogLine &operator=(LogLine &&) = delete;
+    LogLine(const LogLine&) = delete;
+    LogLine& operator=(const LogLine&) = delete;
+    LogLine(LogLine&&) = delete;
+    LogLine& operator=(LogLine&&) = delete;
 
-    [[nodiscard]] std::ostream &stream() noexcept;
+    [[nodiscard]] std::ostream& stream() noexcept;
 
 private:
     struct Impl;
@@ -30,10 +30,10 @@ private:
     static constexpr std::size_t LOG_LINE_IMPL_SIZE = 1024;
     alignas(std::max_align_t) std::byte m_implStorage[LOG_LINE_IMPL_SIZE]; // 要求最大对齐
 
-    [[nodiscard]] Impl &getImpl() noexcept;
+    [[nodiscard]] Impl& getImpl() noexcept;
 };
 
-PANS_API void LogPrintf(Logger &logger, LogLevel::Level level, u32 line, std::string_view file_name, const char *format, ...);
+PANS_API void LogPrintf(Logger& logger, LogLevel::Level level, u32 line, std::string_view file_name, const char* format, ...);
 }
 
 #define PANS_LOG_LEVEL(logger, level)\

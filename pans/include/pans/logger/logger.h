@@ -50,7 +50,6 @@ private:
 using LoggerPtr = std::shared_ptr<Logger>;
 [[nodiscard]] PANS_API LoggerPtr GetRootLogger();
 [[nodiscard]] PANS_API LoggerPtr GetLogger(std::string_view name);
-
 }
 
 #endif //PANS_INCLUDE_PANS_LOGGER_LOGGER_H

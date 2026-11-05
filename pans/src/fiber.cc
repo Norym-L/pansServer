@@ -35,7 +35,7 @@ public:
     }
 
     CurrentFiberGuard(const CurrentFiberGuard&) = delete;
-    CurrentFiberGuard operator=(const CurrentFiberGuard&) = delete;
+    CurrentFiberGuard& operator=(const CurrentFiberGuard&) = delete;
 
 private:
     Fiber* m_previous; // 指向上一个协程

@@ -20,7 +20,7 @@ namespace pans::detail
 {
 struct LogLine::Impl final
 {
-    Impl(Logger &logger, LogLevel::Level level, u32 line, std::string_view file_name)
+    Impl(Logger& logger, LogLevel::Level level, u32 line, std::string_view file_name)
         : m_logger(logger)
         , m_level(level)
         , m_line(line)
@@ -50,7 +50,7 @@ struct LogLine::Impl final
         };
     }
 
-    Logger &m_logger;
+    Logger& m_logger;
     LogLevel::Level m_level;
     u32 m_line = 0;
     std::string_view m_fileName;
@@ -64,31 +64,31 @@ struct LogLine::Impl final
     std::ostream m_stream;
 };
 
-LogLine::LogLine(Logger &logger, LogLevel::Level level, u32 line, std::string_view file_name)
+LogLine::LogLine(Logger& logger, LogLevel::Level level, u32 line, std::string_view file_name)
 {
     static_assert(sizeof(Impl) <= LOG_LINE_IMPL_SIZE, "LogLine inline implementation storage is to small");
     static_assert(alignof(Impl) <= alignof(std::max_align_t), "Never");
-    std::construct_at(reinterpret_cast<Impl *>(m_implStorage), logger, level, line, file_name); // 在m_implStorage上构造Impl对象
+    std::construct_at(reinterpret_cast<Impl*>(m_implStorage), logger, level, line, file_name); // 在m_implStorage上构造Impl对象
 }
 
-LogLine::Impl &LogLine::getImpl() noexcept
+LogLine::Impl& LogLine::getImpl() noexcept
 {
-    return *std::launder(reinterpret_cast<Impl *>(m_implStorage));
+    return *std::launder(reinterpret_cast<Impl*>(m_implStorage));
 }
 
 LogLine::~LogLine() noexcept
 {
-    Impl &impl = getImpl();
+    Impl& impl = getImpl();
     LoggerAccess::Submit(impl.m_logger, impl.getRecord());
     std::destroy_at(&impl);
 }
 
-std::ostream &LogLine::stream() noexcept
+std::ostream& LogLine::stream() noexcept
 {
     return getImpl().m_stream;
 }
 
-void LogPrintf(Logger &logger, LogLevel::Level level, u32 line, std::string_view file_name, const char *format, ...)
+void LogPrintf(Logger& logger, LogLevel::Level level, u32 line, std::string_view file_name, const char* format, ...)
 {
     LogLine log_line(logger, level, line, file_name); // 临时构建LogLine，随后析构submit
     if (format == nullptr)
