@@ -245,8 +245,6 @@ bool TimerManager::cancel(const Timer::ptr& timer)
         discarded_callback = std::move(timer->m_callback);
     }
     return true;
-
-    (void) discarded_callback; // 抑制警告用
 }
 
 bool TimerManager::refresh(const Timer::ptr& timer)
