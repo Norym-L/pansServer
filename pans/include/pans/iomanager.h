@@ -13,10 +13,11 @@ public:
 
     enum class Event : u32
     {
-        NONE = 0x0,
-        READ = 0x1,
+        NONE  = 0x0,
+        READ  = 0x1,
         WRITE = 0x4,
     };
+
     explicit IOManager(std::size_t thread = 1, bool use_caller = true, const std::string& name = "");
     ~IOManager() override;
 
@@ -31,7 +32,9 @@ public:
     bool cancelEvent(int fd, Event event);
     bool cancelAll(int fd);
 
+    /// 在多个 iomanager 中删除与此 fd 关联的事件
     static bool CancelFdAcrossManagers(int fd);
+    /// 在多个 iomanager 中删除与此 fd 关联的特定事件
     [[nodiscard]] static bool CancelEventAcrossManagers(int fd, Event event);
 
     [[nodiscard]] static IOManager* GetThis() noexcept;
@@ -43,10 +46,11 @@ public:
 protected:
     void tickle() override;
     [[nodiscard]] bool canStop() override;
+    /// 判断是否停止并获取下一次过期时间
+    [[nodiscard]] bool canStop(u64& timeout);
+
     void idle() override;
     void onTimerInsertedAtFront() override;
-
-    [[nodiscard]] bool canStop(u64& timeout);
 
 private:
     struct Impl;

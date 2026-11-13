@@ -1,3 +1,5 @@
+#include "pans/iomanager.h"
+
 #include <algorithm>
 #include <cstring>
 #include <shared_mutex>
@@ -108,7 +110,7 @@ struct IOManager::Impl
         EventContext read;
         EventContext write;
         s32 fd{-1};
-        u32 events{0};     /*事件标记*/
+        u32 events{0};     /*注册的事件*/
         u32 generation{1}; /*连接的版本，抛弃不同版本的请求*/
     };
 
@@ -219,6 +221,69 @@ struct IOManager::Impl
         {
             LOG_ERROR << "could not dispatch IO event: unknown error";
         }
+    }
+
+    static_assert(static_cast<u32>(Event::READ) == static_cast<u32>(EPOLLIN));
+    static_assert(static_cast<u32>(Event::WRITE) == static_cast<u32>(EPOLLOUT));
+
+    void processReadyEvent(const epoll_event& event)
+    {
+        const u64 token = event.data.u64;
+        if (token == WAKE_TOKEN)
+        {
+            u64 value{0};
+            while (::read(m_wakeFd, &value, sizeof(value)) < 0 && errno == EINTR)
+            {}
+            return;
+        }
+        FdContext* context = findContext(static_cast<int>(static_cast<u32>(token))); // fd 等于 token 的低32位
+        if (!context)
+        {
+            return;
+        }
+        EventContext read_context;
+        EventContext write_context;
+        std::size_t triggered{0};
+        {
+            std::lock_guard lock(context->mutex);
+            if (context->generation != static_cast<u32>(token >> 32) || context->events == 0U) // 旧事件
+            {
+                return;
+            }
+            u32 ready_bits = event.events;
+            if (ready_bits & (EPOLLERR | EPOLLHUP)) // 网络错误会上报 EPOLLERR 或是 EPOLLHUP
+            {
+                ready_bits |= EPOLLET | ((EPOLLIN | EPOLLOUT) & context->events); // 将错误伪装成应用层关心的 读/写 事件，触发应用层的读写socket，让应用层发现错误
+            }
+            const u32 ready = ready_bits & (EPOLLIN | EPOLLOUT) & context->events; // 触发的事件
+            if (ready == 0U)
+            {
+                return;
+            }
+
+            const u32 registered = context->events;    // 注册的事件
+            const u32 remaining = registered & ~ready; // 删掉触发的事件
+            u32 dispatch_events = ready;
+            if (!updateInterest(*context, remaining))
+            {
+                dispatch_events = registered; // 更新失败就全触发
+                context->events = 0U;
+                context->advanceGeneration();
+            }
+            if (dispatch_events & static_cast<u32>(Event::READ))
+            {
+                read_context = TakeEvent(*context, Event::READ);
+                ++triggered;
+            }
+            if (dispatch_events & static_cast<u32>(Event::WRITE))
+            {
+                write_context = TakeEvent(*context, Event::WRITE);
+                ++triggered;
+            }
+        }
+        m_pendingEventCount.fetch_sub(triggered, std::memory_order_acq_rel);
+        Dispatch(std::move(read_context));
+        Dispatch(std::move(write_context));
     }
 
     std::atomic<bool> m_shuttingDown{false};
@@ -413,15 +478,131 @@ bool IOManager::cancelAll(const int fd)
     return true;
 }
 
-// bool IOManager::CancelFdAcrossManagers(int fd) {}
-// bool IOManager::CancelEventAcrossManagers(int fd, Event event) {}
-// IOManager* IOManager::GetThis() noexcept {}
-// u64 IOManager::registerCancellationAction(std::function<void()> action) {}
-// void IOManager::unregisterCancellationAction(u64 key) noexcept {}
-// bool IOManager::isShuttingDown() const noexcept {}
-// void IOManager::tickle() {}
-// bool IOManager::canStop() {}
-// void IOManager::idle() {}
-// void IOManager::onTimerInsertedAtFront() {}
-// bool IOManager::canStop(u64& timeout) {}
+bool IOManager::CancelFdAcrossManagers(const int fd)
+{
+    bool canceled = false;
+    std::lock_guard registry_lock(GetIOManagerMutex());
+    for (auto* mamager: GetIOManagerRegistry())
+    {
+        canceled = mamager->cancelAll(fd) || canceled;
+    }
+    return canceled;
+}
+
+bool IOManager::CancelEventAcrossManagers(const int fd, const Event event)
+{
+    bool canceled = false;
+    std::lock_guard registry_lock(GetIOManagerMutex());
+    for (auto* mamager: GetIOManagerRegistry())
+    {
+        canceled = mamager->cancelEvent(fd, event) || canceled;
+    }
+    return canceled;
+}
+
+IOManager* IOManager::GetThis() noexcept
+{
+    return dynamic_cast<IOManager*>(Scheduler::GetThis());
+}
+
+u64 IOManager::registerCancellationAction(std::function<void()> action)
+{
+    ASSERT_RETVAL2(action, INVALID64, "wait cancellation action must not be empty");
+    std::lock_guard lock(m_impl->m_mutex);
+    if (m_impl->m_shuttingDown.load(std::memory_order_acquire))
+    {
+        return 0;
+    }
+    const u64 key = ++m_impl->m_nextWaitRegistration;
+    m_impl->m_waitCancellations.emplace(key, std::move(action));
+    return key;
+}
+
+void IOManager::unregisterCancellationAction(const u64 key) noexcept
+{
+    [[maybe_unused]] std::function<void()> discarded;
+    {
+        std::lock_guard lock(m_impl->m_mutex);
+        const auto it = m_impl->m_waitCancellations.find(key);
+        if (it == m_impl->m_waitCancellations.end())
+        {
+            return;
+        }
+        discarded = std::move(it->second);
+        m_impl->m_waitCancellations.erase(it);
+    }
+}
+
+bool IOManager::isShuttingDown() const noexcept
+{
+    return m_impl->m_shuttingDown.load(std::memory_order_acquire);
+}
+
+void IOManager::tickle()
+{
+    constexpr u64 ONE = 1;
+    ssize_t result{0};
+    do
+    {
+        result = ::write(m_impl->m_wakeFd, &ONE, sizeof(ONE));
+    }
+    while (result < 0 && errno == EINTR);
+    if (result < 0 && errno != EAGAIN)
+    {
+        LogEpollError("eventfd write", m_impl->m_wakeFd);
+    }
+}
+
+bool IOManager::canStop()
+{
+    u64 timeout = INVALID64;
+    return canStop(timeout);
+}
+
+bool IOManager::canStop(u64& timeout)
+{
+    timeout = getNextTimeoutU64();
+    return timeout == INVALID64
+           && m_impl->m_pendingEventCount.load(std::memory_order_acquire) == 0
+           && Scheduler::canStop();
+}
+
+void IOManager::idle()
+{
+    std::array<epoll_event, MAX_EPOLL_EVENTS> events{};
+    while (true)
+    {
+        int ready_count = 0;
+        do
+        {
+            u64 next_timeout = INVALID64;
+            if (canStop(next_timeout))
+            {
+                return;
+            }
+            const int timeout = next_timeout == INVALID64
+                ? MAX_EPOLL_TIMEOUT_MS
+                : static_cast<int>(std::min(next_timeout, static_cast<u64>(MAX_EPOLL_TIMEOUT_MS)));
+            ready_count = ::epoll_wait(m_impl->m_epollFd, events.data(), static_cast<int>(events.size()), timeout);
+        }
+        while (ready_count < 0 && errno == EINTR);
+
+        std::vector<TimerManager::Callback> callbacks;
+        listExpiredCallback(callbacks);
+        if (!callbacks.empty())
+        {
+            addTask(std::make_move_iterator(callbacks.begin()), std::make_move_iterator(callbacks.end()));
+        }
+        for (int index = 0; index < ready_count; ++index)
+        {
+            m_impl->processReadyEvent(events[index]);
+        }
+        Fiber::YieldToHold(Fiber::WaitReason::External);
+    }
+}
+
+void IOManager::onTimerInsertedAtFront()
+{
+    tickle();
+}
 } // namespace pans

@@ -91,7 +91,7 @@ public:
 
     std::ostream& dump(std::ostream& output) const;
 
-private:
+protected:
     /// 唤醒线程
     virtual void tickle();
 
