@@ -120,7 +120,7 @@ Timer::ptr TimerManager::addConditionTimer(const Duration interval, Callback cal
     return addTimer(interval,
                     [condition = std::move(condition), callback = std::move(callback)]() mutable
                         {
-                            if (condition.lock())
+                            if (auto tmp = condition.lock()) // 防止 condition 析构
                             {
                                 callback();
                             }
