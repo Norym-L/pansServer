@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <ranges>
 #include <shared_mutex>
 #include <unordered_set>
 #include <sys/epoll.h>
@@ -116,7 +117,7 @@ struct IOManager::Impl
 
     [[nodiscard]] FdContext* findContext(const int fd) const
     {
-        std::shared_lock lock(m_contextMutex);
+        std::shared_lock lock(m_contextsMutex);
         const auto it = m_contexts.find(fd);
         return it == m_contexts.end() ? nullptr : it->second.get();
     }
@@ -124,14 +125,14 @@ struct IOManager::Impl
     [[nodiscard]] FdContext* getOrCreateContext(int fd)
     {
         {
-            std::shared_lock lock(m_contextMutex);
+            std::shared_lock lock(m_contextsMutex);
             const auto it = m_contexts.find(fd);
             if (it != m_contexts.end())
             {
                 return it->second.get();
             }
         }
-        std::unique_lock lock(m_contextMutex);
+        std::unique_lock lock(m_contextsMutex);
         auto [it, inserted] = m_contexts.try_emplace(fd);
         if (inserted)
         {
@@ -246,7 +247,7 @@ struct IOManager::Impl
         std::size_t triggered{0};
         {
             std::lock_guard lock(context->mutex);
-            if (context->generation != static_cast<u32>(token >> 32) || context->events == 0U) // 旧事件
+            if (context->generation != static_cast<u32>(token >> 32U) || context->events == 0U) // 旧事件
             {
                 return;
             }
@@ -286,6 +287,44 @@ struct IOManager::Impl
         Dispatch(std::move(write_context));
     }
 
+    void cancelEvents() noexcept
+    {
+        std::vector<EventContext> canceled;
+        std::size_t removed{0};
+        std::unique_lock context_lock(m_contextsMutex);
+        for (auto& context_owner: m_contexts | std::views::values)
+        {
+            auto& context = *context_owner;
+            if (context.events == 0U)
+            {
+                continue;
+            }
+            epoll_event ignored{};
+            (void) ::epoll_ctl(m_epollFd, EPOLL_CTL_DEL, context.fd, &ignored);
+            if (context.events & static_cast<u32>(Event::READ))
+            {
+                canceled.push_back(TakeEvent(context, Event::READ));
+                ++removed;
+            }
+            if (context.events & static_cast<u32>(Event::WRITE))
+            {
+                canceled.push_back(TakeEvent(context, Event::WRITE));
+                ++removed;
+            }
+            context.events = 0;
+            context.advanceGeneration();
+        }
+        context_lock.unlock();
+        if (removed != 0)
+        {
+            m_pendingEventCount.fetch_sub(removed, std::memory_order_acq_rel);
+        }
+        for (auto& event : canceled)
+        {
+            Dispatch(std::move(event));
+        }
+    }
+
     std::atomic<bool> m_shuttingDown{false};
     std::mutex m_mutex;
     std::unordered_map<u64, std::function<void()> > m_waitCancellations;
@@ -293,7 +332,7 @@ struct IOManager::Impl
     int m_epollFd{-1};
     int m_wakeFd{-1};
     std::atomic<std::size_t> m_pendingEventCount{0}; // epoll 上注册的事件
-    mutable std::shared_mutex m_contextMutex;        // 保护 epoll
+    mutable std::shared_mutex m_contextsMutex;       // 保护 epoll
     std::unordered_map<int, std::unique_ptr<FdContext> > m_contexts;
 };
 
@@ -582,7 +621,7 @@ void IOManager::idle()
             }
             const int timeout = next_timeout == INVALID64
                 ? MAX_EPOLL_TIMEOUT_MS
-                : static_cast<int>(std::min(next_timeout, static_cast<u64>(MAX_EPOLL_TIMEOUT_MS)));
+                : static_cast<int>(std::min<u64>(next_timeout, MAX_EPOLL_TIMEOUT_MS));
             ready_count = ::epoll_wait(m_impl->m_epollFd, events.data(), static_cast<int>(events.size()), timeout);
         }
         while (ready_count < 0 && errno == EINTR);
@@ -604,5 +643,41 @@ void IOManager::idle()
 void IOManager::onTimerInsertedAtFront()
 {
     tickle();
+}
+
+IOManager::~IOManager()
+{
+    std::unordered_map<u64, std::function<void()>> cancellations;
+    {
+        std::lock_guard lock(m_impl->m_mutex);
+        m_impl->m_shuttingDown.store(true, std::memory_order_release);
+        cancellations.swap(m_impl->m_waitCancellations);
+    }
+    {
+        std::lock_guard registry_lock(GetIOManagerMutex());
+        GetIOManagerRegistry().erase(this);
+    }
+    for (auto& callback : cancellations | std::views::values)
+    {
+        callback();
+    }
+    cancelAllTimers();
+    m_impl->cancelEvents();
+    try
+    {
+        Scheduler::stop();
+    }
+    catch (...)
+    {
+        std::terminate();
+    }
+    if (m_impl->m_wakeFd >= 0)
+    {
+        ::close(m_impl->m_wakeFd);
+    }
+    if (m_impl->m_epollFd >=0 )
+    {
+        ::close(m_impl->m_epollFd);
+    }
 }
 } // namespace pans
