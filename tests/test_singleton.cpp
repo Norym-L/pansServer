@@ -2,7 +2,7 @@
 #include <thread>
 #include <vector>
 
-#include <pans/singleton.hpp>
+#include <pans/singleton.h>
 
 class A : public pans::Singleton<A>
 {
