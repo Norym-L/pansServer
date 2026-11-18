@@ -25,7 +25,7 @@ void Formatter::format(const LogRecordView& record, FormattedRecordBuffer& outpu
 template<typename T>
 void AppendInteger(FormattedRecordBuffer& output, T value)
 {
-    std::array < char, 24 > buffer{};
+    std::array<char, 24> buffer{};
     const auto result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), value);
     ASSERT_RETNONE2(result.ec == std::errc(), "trans " << value << " to chars failed.");
     output.append(buffer.data(), static_cast<std::size_t>(result.ptr - buffer.data()));
@@ -113,8 +113,7 @@ public:
         static thread_local time_t last_second = 0;
         static thread_local char cached_date_time[20] = {'\0'};
         const auto duration = record.m_timestamp.time_since_epoch();
-        const time_t current_second = static_cast<time_t>(std::chrono::duration_cast<std::chrono::seconds>(duration).
-            count());
+        const time_t current_second = static_cast<time_t>(std::chrono::duration_cast<std::chrono::seconds>(duration).count());
         if (current_second != last_second)
         {
             std::tm buffer{};
@@ -143,14 +142,15 @@ public:
     void format(const LogRecordView& record, FormattedRecordBuffer& output) const override
     {
         const auto total_microseconds = std::chrono::duration_cast<std::chrono::microseconds>(
-            record.m_timestamp.time_since_epoch()).count();
+                                            record.m_timestamp.time_since_epoch())
+                                            .count();
         s64 microseseconds = total_microseconds % 1000000;
         if (microseseconds < 0)
         {
             microseseconds += 1000000;
         }
         // 小数对齐补零
-        std::array < char, MICROSECONDS_WIDTH > digits{};
+        std::array<char, MICROSECONDS_WIDTH> digits{};
         auto remaining = static_cast<u32>(microseseconds);
         for (std::size_t index = digits.size(); index-- > 0;)
         {

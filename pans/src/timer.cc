@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <iterator>
 #include <limits>
 #include <mutex>

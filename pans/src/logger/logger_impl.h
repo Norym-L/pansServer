@@ -55,5 +55,4 @@ public:
 }
 }
 
-
 #endif // PANS_SRC_LOGGER_LOGGER_IMPL_H

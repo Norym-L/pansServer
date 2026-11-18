@@ -2,7 +2,6 @@
 #define PANS_SRC_LOGGER_APPENDER_IMPL_H
 
 #include <atomic>
-#include <cstdio>
 #include <mutex>
 #include <string_view>
 

@@ -1,4 +1,3 @@
-#include <cstdint>
 #include <cstdio>
 
 #include <pans/utils/string_utils.h>

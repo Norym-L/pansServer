@@ -85,4 +85,4 @@
 		break;\
 	}else{}
 
-#endif // !PANS_INCLUDE_PANS_MACROS_H
+#endif // PANS_INCLUDE_PANS_MACROS_H

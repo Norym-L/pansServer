@@ -1,9 +1,6 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
-#include <functional>
-#include <memory>
-#include <thread>
 #include <utility>
 
 #if defined(__linux__)

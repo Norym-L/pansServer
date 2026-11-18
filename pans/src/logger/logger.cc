@@ -1,6 +1,5 @@
 #include "logger_impl.h"
 
-#include <algorithm>
 #include <cstdio>
 #include <mutex>
 #include <stdexcept>
@@ -9,7 +8,6 @@
 
 #include <pans/macros.h>
 #include "appender_impl.h"
-#include "buffer.h"
 
 namespace pans
 {

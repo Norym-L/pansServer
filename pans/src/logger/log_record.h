@@ -2,7 +2,6 @@
 #define PANS_SRC_LOGGER_LOG_RECORD_H
 
 #include <chrono>
-#include <cstdint>
 #include <string_view>
 
 #include <pans/logger/log_level.h>

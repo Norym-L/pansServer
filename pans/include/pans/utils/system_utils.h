@@ -3,7 +3,7 @@
 
 #include <chrono>
 
-#include <pans/macros.h>
+#include <pans/types.h>
 #include <pans/export.h>
 
 namespace pans
@@ -19,6 +19,5 @@ namespace pans
  */
 [[nodiscard]] PANS_API std::string GetBacktrace(int size = 20, int skip = 1, const std::string& prefix = "");
 }
-
 
 #endif //PANS_INCLUDE_PANS_UTILS_SYSTEM_UTILS_H
