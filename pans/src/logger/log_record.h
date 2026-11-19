@@ -5,7 +5,7 @@
 #include <string_view>
 
 #include <pans/logger/log_level.h>
-#include <pans/macros.h>
+#include <pans/types.h>
 
 namespace pans::detail
 {

@@ -1,6 +1,8 @@
 #include "formatter.h"
 #include <unordered_map>
 
+#include <pans/macros.h>
+
 namespace pans::detail
 {
 constexpr std::string_view DEFAULT_DATE_FORMAT = "%Y-%m-%d %H:%M:%S";
